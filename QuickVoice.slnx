@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/QuickVoice.Core/QuickVoice.Core.csproj" />
+    <Project Path="src/QuickVoice/QuickVoice.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/QuickVoice.Core.Tests/QuickVoice.Core.Tests.csproj" />
+  </Folder>
+</Solution>
