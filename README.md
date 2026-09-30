@@ -11,7 +11,7 @@
   <br><a href="README.en.md">English</a>
 </p>
 
-<p align="center"><a href="docs/demo.mp4"><img src="docs/demo.gif" width="800" alt="Demonstração: o QuickVoice abre o Bloco de notas no meio da frase, digita bom dia e pesquisa o dólar no Google"></a><br><sub><a href="docs/demo.mp4">Ver o vídeo em alta resolução (MP4)</a></sub></p>
+<p align="center"><a href="docs/demo.mp4"><img src="docs/demo.gif" width="800" alt="Demonstração: o QuickVoice abre o Bloco de notas no meio da frase, digita bom dia e pesquisa o dólar no Google"></a><br><sub><a href="docs/demo.mp4">Ver o vídeo em alta resolução (MP4)</a> · <a href="docs/demo-vertical.mp4">versão vertical (Reels, TikTok, Shorts)</a></sub></p>
 
 Diga "abre o bloco de notas e digita bom dia": o Bloco de Notas já abre enquanto você
 ainda está dizendo "digita", e "bom dia" é digitado na pausa. Grátis, sem conta e sem
