@@ -6,6 +6,7 @@ public enum SystemAction
     CloseWindow, CloseTab, Minimize, Maximize, ShowDesktop, SwitchWindow,
     VolumeUp, VolumeDown, VolumeSet, Mute, PlayPause, NextTrack, PreviousTrack,
     Screenshot, Lock, DictationStart, DictationStop,
+    Undo, Repeat, SnapLeft, SnapRight, OtherMonitor,
 }
 
 /// <summary>
@@ -44,6 +45,15 @@ public static class Controls
         (SystemAction.Screenshot, "print da|de? tela"),
         (SystemAction.Screenshot, "screenshot"),
         (SystemAction.Lock, "bloqueia|bloquear|bloqueie|trava|travar|trave|lock o|a|the|my? computador|pc|tela|computer|screen"),
+        (SystemAction.Undo, "desfaz|desfazer|desfaca|desfaça|undo isso|that|it|o|a? ultimo|ultima|last? comando|command?"),
+        (SystemAction.Repeat, "repete|repetir|repita|repeat o|a|that|the|it? ultimo|ultima|last? comando|command|isso?"),
+        (SystemAction.Repeat, "faz|faca|fazer de novo"),
+        (SystemAction.Repeat, "de novo $"),
+        (SystemAction.Repeat, "do it again"),
+        (SystemAction.SnapLeft, "coloca|coloque|joga|jogue|manda|mande|poe|ponha|move|mova|leva|leve|snap|put isso|a|essa|esta|this|the|it? janela|window? na|pra|para|pro|to|on a|the? esquerda|left"),
+        (SystemAction.SnapRight, "coloca|coloque|joga|jogue|manda|mande|poe|ponha|move|mova|leva|leve|snap|put isso|a|essa|esta|this|the|it? janela|window? na|pra|para|pro|to|on a|the? direita|right"),
+        (SystemAction.OtherMonitor, "coloca|coloque|joga|jogue|manda|mande|poe|ponha|move|mova|leva|leve|put isso|a|essa|esta|this|the|it? janela|window? pro|pra|para|no|na|to|on o|a|the? outro|outra|other|next monitor|tela|screen|display"),
+        (SystemAction.OtherMonitor, "troca|trocar|troque|muda|mudar|mude|switch de? monitor|tela|screen"),
     ];
 
     private static readonly List<(SystemAction Action, Token[] Tokens)> Parsed =
@@ -141,6 +151,11 @@ public static class Controls
         SystemAction.Lock => "bloquear o PC",
         SystemAction.DictationStart => "começar o ditado",
         SystemAction.DictationStop => "parar o ditado",
+        SystemAction.Undo => "desfazer",
+        SystemAction.Repeat => "repetir o último comando",
+        SystemAction.SnapLeft => "janela na esquerda",
+        SystemAction.SnapRight => "janela na direita",
+        SystemAction.OtherMonitor => "janela no outro monitor",
         _ => action.ToString(),
     };
 

@@ -18,11 +18,15 @@ internal sealed class AppController(Session session, BarModel model, Options opt
     private IListener? listener;
     private bool listening;
     private bool busy;
+    private readonly History history = new();
+    private Forms.ToolStripMenuItem? updateItem;
+    private Updater.Release? update;
 
     public void Start()
     {
-        bar = new BarWindow(model);
+        bar = new BarWindow(model, settings);
         bar.Show();
+        session.History = history;
         model.Toggle = Toggle;
         model.Submit = session.Submit;
         var handle = new WindowInteropHelper(bar).Handle;
@@ -41,6 +45,46 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         {
             session.WakePhrases = settings.WakeList;
             Toggle();  // always listening, waiting for its name
+        }
+        if (settings.CheckUpdates) _ = CheckForUpdateAsync(quiet: true);
+    }
+
+    private void ShowHistory() => new HistoryWindow(history, session.Submit).Show();
+
+    /// <summary>Quiet at startup (only a newer version is mentioned); from the menu it also says "up to date".</summary>
+    private async Task CheckForUpdateAsync(bool quiet)
+    {
+        update = await Updater.CheckAsync();
+        if (update is null)
+        {
+            if (!quiet) model.Notice = $"O QuickVoice {Updater.Current.ToString(3)} está atualizado.";
+            return;
+        }
+        if (updateItem is not null) updateItem.Text = $"Atualizar para a {update.Tag}…";
+        model.Notice = $"Versão nova: {update.Tag}. Ícone na bandeja → Atualizar.";
+    }
+
+    private async void OnUpdate()
+    {
+        if (update is null)
+        {
+            await CheckForUpdateAsync(quiet: false);
+            return;
+        }
+        var installed = Updater.Installed;
+        var question = installed
+            ? $"Baixar e instalar o QuickVoice {update.Tag}? Ele fecha e abre de novo sozinho."
+            : $"Esta cópia não foi instalada pelo instalador. Abrir a página da {update.Tag} para baixar?";
+        if (MessageBox.Show(question, "QuickVoice", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        model.Notice = installed ? $"Baixando a {update.Tag}…" : null;
+        try
+        {
+            if (await Updater.InstallAsync(update)) Quit();
+        }
+        catch (Exception error) when (error is System.Net.Http.HttpRequestException or TaskCanceledException or IOException
+                                          or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            model.Notice = $"A atualização falhou: {error.Message}";
         }
     }
 
@@ -203,6 +247,9 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         menu.Items.Add(new Forms.ToolStripMenuItem("Mostrar a barra", null, (_, _) => bar?.Show()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Configurações…", null, (_, _) => OpenSettings()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Editar meus atalhos…", null, (_, _) => OpenShortcuts()));
+        menu.Items.Add(new Forms.ToolStripMenuItem("Histórico…", null, (_, _) => ShowHistory()));
+        updateItem = new Forms.ToolStripMenuItem("Procurar atualizações", null, (_, _) => OnUpdate());
+        menu.Items.Add(updateItem);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(new Forms.ToolStripMenuItem("Sair do QuickVoice", null, (_, _) => Quit()));
         var icon = new Forms.NotifyIcon { ContextMenuStrip = menu, Visible = true };

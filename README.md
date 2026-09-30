@@ -37,7 +37,13 @@ o System One da TypeSafe, para entender frases mais soltas.
 | "tira um print", "bloqueia o computador" | print salvo em Imagens → Capturas de Tela; tela de bloqueio |
 | "clica em salvar", "clica no botão enviar" | clica no botão, link ou menu com esse nome na janela em frente |
 | "modo ditado" … "fim do ditado" | tudo o que você falar no meio é digitado, a cada pausa |
-| suas frases | seus atalhos (veja abaixo) |
+| "fecha o chrome", "vai pro teams" | fecha todas as janelas do app / traz o app para frente |
+| "chrome na esquerda e bloco de notas na direita", "manda o teams pro outro monitor", "joga isso na esquerda" | encaixa janelas lado a lado ou troca de monitor |
+| "abre a pasta downloads", "abre a pasta projetos", "abre o último pdf", "abre a última planilha" | abre pastas (as suas também, pelo nome) e o arquivo mais recente de um tipo |
+| "quanto é 15% de 320", "quanto é 12 vezes 8", "que horas são em Nova York", "que dia é hoje" | responde na própria barra (contas vão para a área de transferência) |
+| "desfaz isso" | fecha a janela que o QuickVoice acabou de abrir, senão Ctrl+Z |
+| "repete", "faz de novo" | refaz os comandos da última frase |
+| suas frases | seus atalhos e rotinas (veja abaixo) |
 
 Encadeie numa frase só: "abre o terminal e digita dir", "abre o spotify e aumenta o volume".
 Se o app já está aberto, "abre…" traz a janela para frente em vez de abrir outra.
@@ -69,7 +75,9 @@ sistema, cliques e atalhos continuam nas regras locais.
    QuickVoice ou com `--locale en-US`.
 
 O ícone na bandeja (perto do relógio) começa/pausa com um clique; o botão direito tem
-"Escrever um comando", "Configurações…", "Editar meus atalhos…", "Usar chave do Jev…" e "Sair".
+"Escrever um comando", "Configurações…", "Editar meus atalhos…", "Histórico…", "Procurar atualizações",
+"Usar chave do Jev…" e "Sair". No **Histórico** (salvo só no PC, em `%LOCALAPPDATA%\QuickVoice\historico.json`)
+dê dois cliques numa frase para repeti-la.
 Arraste a pílula para qualquer lugar.
 
 ### Configurações
@@ -84,15 +92,19 @@ Bandeja → **Configurações…** (salvas em `%APPDATA%\QuickVoice\config.json`
 - **Atalho para ouvir:** Alt+Espaço, Ctrl+Alt+Espaço ou Ctrl+Shift+Espaço.
 - **Palavra de ativação:** sempre ouvindo, age só quando a frase começa com "QuickVoice"
   ("QuickVoice, abre o chrome"). Você escolhe o nome e as variações.
+- **Aparência da barra:** tema escuro ou claro, cor de destaque (amarelo, azul, verde, rosa) e tamanho.
+- **Atualizações:** ao iniciar, procura uma versão nova no GitHub. Bandeja → **Atualizar** baixa o
+  instalador da release, instala em silêncio e reabre o app (na versão portátil, abre a página da release).
 
 ### Seus atalhos
 
 Bandeja → **Editar meus atalhos…** abre `%APPDATA%\QuickVoice\atalhos.json` no Bloco de notas.
-Cada atalho tem frases e o que fazer, em ordem: abrir uma pasta, arquivo, programa ou site; digitar
-um texto; apertar teclas. Salvou, já vale.
+Cada atalho tem frases e o que fazer, em ordem: abrir apps (pelo nome), pastas, arquivos, programas ou
+sites; digitar um texto; apertar teclas. Uma lista em "abrir" vira uma **rotina**. Salvou, já vale.
 
 ```jsonc
 [
+  { "frases": ["modo trabalho"], "abrir": ["Outlook", "Microsoft Teams", "https://github.com"] },
   { "frases": ["abre meu projeto", "meu projeto"], "abrir": "%USERPROFILE%\\Projetos\\site" },
   { "frases": ["assinatura do email"], "digitar": "Atenciosamente,\nMatheus" },
   { "frases": ["salva tudo"], "teclas": "ctrl+shift+s" }

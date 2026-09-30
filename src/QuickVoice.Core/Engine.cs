@@ -105,7 +105,8 @@ public sealed class Engine
     private ActionKind[][] Outcomes(Decision d)
     {
         var namesBrowser = d.App is { } app && Browsers.Contains(app);
-        ActionKind[][] local = [[ActionKind.Control], [ActionKind.Click], [ActionKind.Shortcut]];
+        ActionKind[][] local = [[ActionKind.Control], [ActionKind.Click], [ActionKind.Shortcut], [ActionKind.CloseApp],
+                                [ActionKind.OpenFolder], [ActionKind.OpenRecent], [ActionKind.Answer]];
         return namesBrowser
             ? [[ActionKind.OpenUrl, ActionKind.WebSearch, ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText], .. local]
             : [[ActionKind.OpenUrl, ActionKind.WebSearch], [ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText], .. local];
@@ -150,9 +151,13 @@ public sealed class Engine
         ActionKind.OpenUrl => d.Argument is { } a && Site.Url(a) is { } url ? new Command.OpenUrl(url) : null,
         ActionKind.WebSearch => d.Argument is { } q ? new Command.WebSearch(q) : null,
         ActionKind.TypeText => d.Argument is { } t ? new Command.TypeText(Dictation.Format(t, bareDot: false)) : null,
-        ActionKind.Control => d.Detail is { } code ? Controls.Decode(code) : null,
+        ActionKind.Control => d.Detail is { } code && Controls.Decode(code) is { } control ? control with { App = d.App } : null,
         ActionKind.Click => d.Argument is { } target ? new Command.Click(target) : null,
         ActionKind.Shortcut => d.Detail is { } name ? new Command.Shortcut(name) : null,
+        ActionKind.CloseApp => d.AppProbability >= PauseThreshold && d.App is { } app ? new Command.CloseApp(app) : null,
+        ActionKind.OpenFolder => d.Detail is { } folder ? new Command.OpenFolder(folder) : null,
+        ActionKind.OpenRecent => d.Detail is { } kind ? new Command.OpenRecent(kind) : null,
+        ActionKind.Answer => d.Detail?.Split(':', 2) is [var answerKind, var value] ? new Command.Answer(d.Argument ?? "", answerKind, value) : null,
         _ => null,
     };
 
@@ -192,8 +197,12 @@ public sealed class Engine
         return index >= 0 ? index : tail.Length;
     }
 
-    private List<string> AliasesOf(Command command) =>
-        command is Command.OpenApp open ? [open.App, .. AppAliases.GetValueOrDefault(open.App) ?? []] : [];
+    private List<string> AliasesOf(Command command) => command switch
+    {
+        Command.OpenApp c => [c.App, .. AppAliases.GetValueOrDefault(c.App) ?? []],
+        Command.CloseApp c => [c.App, .. AppAliases.GetValueOrDefault(c.App) ?? []],
+        _ => [],
+    };
 
     /// <summary>
     /// A command ends where its own words end, so the one chained after it survives even when both were said
@@ -205,7 +214,7 @@ public sealed class Engine
         var words = tail.Select(Vocabulary.Normalized).ToArray();
         int? own = command switch
         {
-            Command.OpenApp => Mention(aliases, words),
+            Command.OpenApp or Command.CloseApp => Mention(aliases, words),
             Command.NewItem => null,  // no span for "a new note", so a command said in the same breath after it is lost
             _ => End((argument ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(Vocabulary.Normalized).ToArray(), words),
         };

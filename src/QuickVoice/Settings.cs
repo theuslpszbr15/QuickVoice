@@ -16,6 +16,14 @@ internal sealed class Settings
     public string WakePhrases { get; set; } = "QuickVoice, Quick Voz";
     /// <summary>"auto" (Alt+Espaço, else Ctrl+Alt+Espaço), "alt", "ctrl-alt" or "ctrl-shift".</summary>
     public string Hotkey { get; set; } = "auto";
+    /// <summary>The bar: "dark" or "light".</summary>
+    public string Theme { get; set; } = "dark";
+    /// <summary>The color of what fires: "yellow", "blue", "green" or "pink".</summary>
+    public string Accent { get; set; } = "yellow";
+    /// <summary>"small", "normal" or "large".</summary>
+    public string BarSize { get; set; } = "normal";
+    /// <summary>Asks GitHub for a newer release when the app starts.</summary>
+    public bool CheckUpdates { get; set; } = true;
 
     public static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QuickVoice", "config.json");
 

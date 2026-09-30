@@ -25,6 +25,9 @@ internal static class Win32
     [DllImport("user32.dll")] public static extern bool ShowWindow(nint hwnd, int command);
     [DllImport("user32.dll")] private static extern nint GetWindow(nint hwnd, int command);
     [DllImport("user32.dll")] public static extern bool LockWorkStation();
+    [DllImport("user32.dll")] public static extern bool IsWindow(nint hwnd);
+    [DllImport("user32.dll")] public static extern bool PostMessage(nint hwnd, uint message, nint wParam, nint lParam);
+    public const uint WM_CLOSE = 0x0010;
     [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(nint hwnd, StringBuilder text, int max);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(nint hwnd, StringBuilder name, int max);
@@ -106,6 +109,20 @@ internal static class Win32
         try
         {
             return Path.Join(Marshal.PtrToStringUni(path), target[(close + 1)..].TrimStart('\\'));
+        }
+        finally
+        {
+            Marshal.FreeCoTaskMem(path);
+        }
+    }
+
+    /// <summary>A known folder by id (Downloads has no Environment.SpecialFolder).</summary>
+    public static string? KnownFolder(Guid id)
+    {
+        if (SHGetKnownFolderPath(ref id, 0, 0, out var path) != 0) return null;
+        try
+        {
+            return Marshal.PtrToStringUni(path);
         }
         finally
         {

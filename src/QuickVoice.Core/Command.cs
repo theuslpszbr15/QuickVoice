@@ -8,12 +8,20 @@ public abstract record Command
     public sealed record OpenUrl(Uri Url) : Command;
     public sealed record WebSearch(string Query) : Command;
     public sealed record TypeText(string Text) : Command;
-    /// <summary>A window, sound, media or session control: "fecha isso", "volume 50", "tira um print".</summary>
-    public sealed record Control(SystemAction Action, int? Value = null) : Command;
+    /// <summary>A window, sound, media or session control: "fecha isso", "volume 50", "chrome na esquerda".</summary>
+    public sealed record Control(SystemAction Action, int? Value = null, string? App = null) : Command;
     /// <summary>Clicks the button, link or menu item with this name in the window in front.</summary>
     public sealed record Click(string Target) : Command;
-    /// <summary>One of the user's own shortcuts, by name.</summary>
+    /// <summary>One of the user's own shortcuts or routines, by name.</summary>
     public sealed record Shortcut(string Name) : Command;
+    /// <summary>Closes every window of an app: "fecha o chrome".</summary>
+    public sealed record CloseApp(string App) : Command;
+    /// <summary>A known folder ("downloads") or one of the user's folders by name.</summary>
+    public sealed record OpenFolder(string Folder) : Command;
+    /// <summary>The newest file of a kind: "pdf", "excel", "download", "any"...</summary>
+    public sealed record OpenRecent(string Kind) : Command;
+    /// <summary>A quick answer shown on the bar: "math" (value computed here), "time" (a time zone id) or "date".</summary>
+    public sealed record Answer(string Question, string Kind, string Value) : Command;
 
     public sealed override string ToString() => this switch
     {
@@ -22,9 +30,13 @@ public abstract record Command
         OpenUrl c => $"abrir {c.Url.OriginalString}",
         WebSearch c => $"pesquisar “{c.Query}”",
         TypeText c => $"digitar “{c.Text}”",
-        Control c => Controls.Describe(c.Action, c.Value),
+        Control c => Controls.Describe(c.Action, c.Value) + (c.App is { } app ? $" · {app}" : ""),
         Click c => $"clicar em “{c.Target}”",
         Shortcut c => $"atalho “{c.Name}”",
+        CloseApp c => $"fechar {c.App}",
+        OpenFolder c => $"abrir a pasta {c.Folder}",
+        OpenRecent c => $"abrir o último {Recent.Describe(c.Kind)}",
+        Answer c => c.Kind == "math" ? $"{c.Question} = {c.Value}" : c.Question,
         _ => GetType().Name,
     };
 

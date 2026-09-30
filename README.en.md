@@ -39,7 +39,13 @@ The local rules understand Portuguese and English.
 | "take a screenshot", "lock the computer" | screenshot saved to Pictures → Screenshots; lock screen |
 | "click save", "click on the send button" | clicks the button, link or menu item with that name in the window in front |
 | "start dictation" … "stop dictation" | everything said in between is typed, at each pause |
-| your phrases | your own shortcuts (see below) |
+| "close chrome", "switch to teams" | closes every window of the app / brings the app forward |
+| "chrome on the left", "coloca o bloco de notas na direita", "send teams to the other monitor" | snaps windows side by side or moves them to the other monitor |
+| "open the downloads", "abre a pasta projetos", "open the latest pdf" | opens folders (your own too, by name) and the newest file of a kind |
+| "what is 15 percent of 320", "what time is it in Tokyo", "que dia é hoje" | answers on the bar (math is copied to the clipboard) |
+| "undo" | closes the window QuickVoice just opened, else Ctrl+Z |
+| "do it again", "repete" | runs the last sentence's commands again |
+| your phrases | your own shortcuts and routines (see below) |
 
 Chain them in one breath: "open terminal and type dir", "open spotify and volume up". If the app is
 already open, "open…" brings its window forward instead of starting another one.
@@ -68,7 +74,8 @@ looser phrasing: tray icon → "Usar chave do Jev". System controls, clicks and 
    **Settings** or with `--locale en-US`.
 
 The tray icon (next to the clock) starts/pauses with a click; right-click for "Escrever um comando" (write
-mode), "Configurações…" (settings), "Editar meus atalhos…" (shortcuts), the Jev key and "Sair" (quit).
+mode), "Configurações…" (settings), "Editar meus atalhos…" (shortcuts), "Histórico…" (history: double-click a
+line to repeat it; kept only on the PC), "Procurar atualizações" (updates), the Jev key and "Sair" (quit).
 Drag the pill anywhere.
 
 ### Settings
@@ -83,15 +90,19 @@ Tray → **Configurações…** (saved to `%APPDATA%\QuickVoice\config.json`):
 - **Listen shortcut:** Alt+Space, Ctrl+Alt+Space or Ctrl+Shift+Space.
 - **Wake word:** always listening, acting only on sentences that start with "QuickVoice"
   ("QuickVoice, open chrome"). You choose the name and its variations.
+- **Bar look:** dark or light theme, accent color (yellow, blue, green, pink) and size.
+- **Updates:** checks GitHub for a newer release at startup; tray → **Atualizar** downloads the release
+  installer, installs it silently and reopens the app (the portable build opens the release page instead).
 
 ### Your own shortcuts
 
 Tray → **Editar meus atalhos…** opens `%APPDATA%\QuickVoice\atalhos.json` in Notepad. Each shortcut has
-phrases and what to do, in order: open a folder, file, program or site; type a text; press keys. Save and
-it applies. English keys work too (`say`, `open`, `type`, `keys`).
+phrases and what to do, in order: open apps (by name), folders, files, programs or sites; type a text; press
+keys. A list in "open" makes a **routine**. Save and it applies. English keys work too (`say`, `open`, `type`, `keys`).
 
 ```jsonc
 [
+  { "say": ["work mode"], "open": ["Outlook", "Microsoft Teams", "https://github.com"] },
   { "say": ["open my project", "my project"], "open": "%USERPROFILE%\\Projects\\site" },
   { "say": ["email signature"], "type": "Best regards,\nMatheus" },
   { "say": ["save all"], "keys": "ctrl+shift+s" }

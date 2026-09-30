@@ -10,7 +10,24 @@ public sealed class LocalDecider : IDecider
     private static readonly HashSet<string> OpenVerbs =
         ["abre", "abrir", "abra", "abri", "open", "launch", "inicia", "iniciar", "inicie", "executa", "executar", "execute", "roda", "rodar", "liga", "start"];
     private static readonly HashSet<string> GoVerbs =
-        ["vai", "va", "ir", "entra", "entrar", "entre", "acessa", "acessar", "acesse", "visita", "visitar", "go", "visit"];
+        ["vai", "va", "ir", "entra", "entrar", "entre", "acessa", "acessar", "acesse", "visita", "visitar", "go", "visit",
+         "muda", "mude", "troca", "troque", "alterna", "alterne", "volta", "volte", "switch"];
+    private static readonly HashSet<string> CloseVerbs =
+        ["fecha", "fechar", "feche", "close", "encerra", "encerrar", "encerre", "quit", "sai", "sair", "saia", "exit", "kill"];
+    private static readonly HashSet<string> PutVerbs =
+        ["coloca", "coloque", "joga", "jogue", "manda", "mande", "poe", "ponha", "move", "mova", "leva", "leve", "put", "snap", "send"];
+    private static readonly Dictionary<string, SystemAction> Sides = new()
+    {
+        ["esquerda"] = SystemAction.SnapLeft, ["left"] = SystemAction.SnapLeft, ["direita"] = SystemAction.SnapRight, ["right"] = SystemAction.SnapRight,
+    };
+    /// <summary>Folders everyone has, by what people call them.</summary>
+    private static readonly Dictionary<string, string> KnownFolders = new()
+    {
+        ["downloads"] = "downloads", ["download"] = "downloads", ["documentos"] = "documents", ["documents"] = "documents",
+        ["imagens"] = "pictures", ["fotos"] = "pictures", ["pictures"] = "pictures", ["musicas"] = "music", ["music"] = "music",
+        ["videos"] = "videos", ["desktop"] = "desktop",
+    };
+    private static readonly HashSet<string> RecentWords = ["ultimo", "ultima", "last", "latest", "recente", "recent"];
     private static readonly HashSet<string> SearchVerbs =
         ["pesquisa", "pesquisar", "pesquise", "procura", "procurar", "procure", "busca", "buscar", "busque", "search", "google", "googla", "find", "look"];
     private static readonly HashSet<string> TypeVerbs =
@@ -82,15 +99,30 @@ public sealed class LocalDecider : IDecider
     {
         var words = Vocabulary.Words(tail).Select(Vocabulary.TrimPunctuation).Where(w => w.Length > 0).ToArray();
         var norm = words.Select(Vocabulary.Normalized).ToArray();
+        var raw = Vocabulary.Words(tail).Where(w => Vocabulary.TrimPunctuation(w).Length > 0).ToArray();  // keeps "15%" for arithmetic
+        Index(apps);
         // The first command said wins; a user's shortcut beats a built-in reading of the same words.
         for (var i = 0; i < norm.Length; i++)
         {
             if (ShortcutAt(norm, i) is { } shortcut)
                 return Act(ActionKind.Shortcut, 0.95, argument: Join(words, Enumerable.Range(i, shortcut.Length)), detail: shortcut.Name);
+            if (QuickAnswers.Match(raw, norm, i) is { } answer)
+                return Act(ActionKind.Answer, 0.95, argument: answer.Question, detail: $"{answer.Kind}:{answer.Value}");
             var clauseEnd = ClauseEnd(norm, i);
+            if (SnapAt(norm, i, clauseEnd) is { } snap)
+                return Act(ActionKind.Control, 0.93, app: snap.App, appProbability: 0.95, argument: Join(words, Enumerable.Range(i, snap.End - i)),
+                           detail: Controls.Encode(snap.Action, null));
             if (Controls.Match(norm, i, clauseEnd) is { } control)
                 return Act(ActionKind.Control, 0.93, argument: Join(words, Enumerable.Range(i, control.End - i)),
                            detail: Controls.Encode(control.Action, control.Value));
+            if (CloseVerbs.Contains(norm[i]))
+            {
+                var target = Enumerable.Range(i + 1, clauseEnd - i - 1)
+                    .SkipWhile(j => Articles.Contains(norm[j]) || norm[j] is "do" or "da" or "de").ToArray();
+                var (app, appP) = target.Length == 0 ? (null, 0.0) : MatchApp(target.Select(j => norm[j]).ToArray(), apps);
+                if (app is not null && appP >= 0.7)
+                    return Act(ActionKind.CloseApp, 0.93, app: app, appProbability: appP, argument: Join(words, Enumerable.Range(i, clauseEnd - i)));
+            }
             if (ClickVerbs.Contains(norm[i]))
             {
                 var target = Enumerable.Range(i + 1, clauseEnd - i - 1).SkipWhile(j => ClickLead.Contains(norm[j])).ToList();
@@ -125,6 +157,7 @@ public sealed class LocalDecider : IDecider
 
         if (OpenVerbs.Contains(verb) || GoVerbs.Contains(verb))
         {
+            if (FolderOrRecent(words, norm, verbAt, rest) is { } place) return place;
             // "abre | meu projeto": a shortcut named right after the verb is the user's own place ("meu" may be part of its name).
             foreach (var at in rest)
             {
@@ -163,8 +196,67 @@ public sealed class LocalDecider : IDecider
     }
 
     private bool StartsCommand(string[] norm, int i) =>
-        IsVerb(norm[i]) || ClickVerbs.Contains(norm[i]) || ShortcutAt(norm, i) is not null
-        || (Controls.Starters.Contains(norm[i]) && Controls.Match(norm, i, norm.Length) is not null);
+        IsVerb(norm[i]) || ClickVerbs.Contains(norm[i]) || CloseVerbs.Contains(norm[i]) || ShortcutAt(norm, i) is not null
+        || (Controls.Starters.Contains(norm[i]) && Controls.Match(norm, i, norm.Length) is not null)
+        || SnapAt(norm, i, norm.Length) is not null;
+
+    /// <summary>
+    /// "chrome na esquerda", "coloca o bloco de notas na direita", "manda o teams pro outro monitor": an app named
+    /// right before where its window goes. Without an app the generic controls handle it ("joga isso na esquerda").
+    /// </summary>
+    private (string App, SystemAction Action, int End)? SnapAt(string[] norm, int start, int clauseEnd)
+    {
+        var from = start;
+        if (from < clauseEnd && IsVerb(norm[from]) && !PutVerbs.Contains(norm[from])) return null;  // "abre o chrome na esquerda" opens it
+        if (from < clauseEnd && PutVerbs.Contains(norm[from])) from++;
+        while (from < clauseEnd && Articles.Contains(norm[from])) from++;
+        for (var k = from + 1; k < clauseEnd && k <= from + 5; k++)
+        {
+            var at = k;
+            if (norm[at] is not ("na" or "pra" or "para" or "pro" or "no" or "to" or "on")) continue;
+            var appWords = norm[from..k];
+            at++;
+            while (at < clauseEnd && norm[at] is "a" or "o" or "the") at++;
+            SystemAction? action = null;
+            var end = at + 1;
+            if (at < clauseEnd && Sides.TryGetValue(norm[at], out var side)) action = side;
+            else if (at + 1 < clauseEnd && norm[at] is "outro" or "outra" or "other" or "next" && norm[at + 1] is "monitor" or "tela" or "screen")
+            {
+                action = SystemAction.OtherMonitor;
+                end = at + 2;
+            }
+            if (action is null) return null;
+            var (app, p) = MatchApp(appWords, indexedApps ?? []);
+            return app is not null && p >= 0.7 ? (app, action.Value, end) : null;
+        }
+        return null;
+    }
+
+    /// <summary>"abre a pasta projetos", "abre os downloads", "abre o último pdf".</summary>
+    private static Decision? FolderOrRecent(string[] words, string[] norm, int verbAt, int[] rest)
+    {
+        var said = rest.SkipWhile(i => Articles.Contains(norm[i]) || GoLinks.Contains(norm[i])).ToArray();
+        if (said.Length == 0) return null;
+        string Span(int last) => Join(words, Enumerable.Range(verbAt, last - verbAt + 1));
+        if (said.Any(i => RecentWords.Contains(norm[i])))
+        {
+            var kinds = said.Select(i => Recent.Nouns.GetValueOrDefault(norm[i])).OfType<string>().ToList();
+            var kind = kinds.FirstOrDefault(k => k != "any") ?? kinds.FirstOrDefault();
+            if (kind is not null) return Act(ActionKind.OpenRecent, 0.93, argument: Span(said[^1]), detail: kind);
+        }
+        if (norm[said[0]] is "pasta" or "folder")
+        {
+            var name = said.Skip(1).SkipWhile(i => norm[i] is "de" or "do" or "da" or "dos" or "das" or "meus" or "minhas").ToArray();
+            if (name.Length == 0) return null;
+            var folder = name.Length == 1 && KnownFolders.TryGetValue(norm[name[0]], out var known) ? known : Join(words, name);
+            return Act(ActionKind.OpenFolder, 0.93, argument: Span(name[^1]), detail: folder);
+        }
+        if (said.Length == 1 && KnownFolders.TryGetValue(norm[said[0]], out var direct))
+            return Act(ActionKind.OpenFolder, 0.93, argument: Span(said[0]), detail: direct);
+        if (said.Length == 3 && norm[said[0]] == "area" && norm[said[2]] == "trabalho")
+            return Act(ActionKind.OpenFolder, 0.93, argument: Span(said[2]), detail: "desktop");
+        return null;
+    }
 
     /// <summary>The longest of the user's phrases said from <paramref name="start"/>.</summary>
     private (string Name, int Length)? ShortcutAt(string[] norm, int start)

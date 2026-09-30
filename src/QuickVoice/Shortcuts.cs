@@ -9,20 +9,21 @@ namespace QuickVoice;
 /// </summary>
 internal sealed class Shortcuts
 {
-    public sealed record Entry(string Name, IReadOnlyList<string> Phrases, string? Open, string? Type, string? Keys);
+    public sealed record Entry(string Name, IReadOnlyList<string> Phrases, IReadOnlyList<string> Open, string? Type, string? Keys);
 
     public static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QuickVoice", "atalhos.json");
 
     private const string Sample = """
         // Atalhos do QuickVoice: diga uma das "frases" e ele faz o resto, nesta ordem:
-        //   "abrir":   pasta, arquivo, programa ou site (aceita %USERPROFILE% e afins)
+        //   "abrir":   app instalado (pelo nome), pasta, arquivo, programa ou site; um só ou uma lista
+        //              (uma lista vira uma rotina: vários apps e sites de uma vez). Aceita %USERPROFILE% e afins.
         //   "digitar": um texto (\n quebra a linha)
         //   "teclas":  atalhos de teclado, ex. "ctrl+shift+s" ou "ctrl+a ctrl+c"
         // Salve o arquivo: o QuickVoice recarrega sozinho.
         [
           {
-            "frases": ["abre os downloads", "minha pasta de downloads"],
-            "abrir": "%USERPROFILE%\\Downloads"
+            "frases": ["modo trabalho", "hora de trabalhar"],
+            "abrir": ["Bloco de notas", "https://github.com", "%USERPROFILE%\\Downloads"]
           },
           {
             "frases": ["assinatura do email"],
@@ -74,19 +75,23 @@ internal sealed class Shortcuts
         {
             var phrases = Strings(item, "frases", "frase", "phrases", "say");
             if (phrases.Count == 0) continue;
-            entries.Add(new Entry(phrases[0], phrases, Text(item, "abrir", "open"), Text(item, "digitar", "type"), Text(item, "teclas", "keys")));
+            entries.Add(new Entry(phrases[0], phrases, Strings(item, "abrir", "open"), Text(item, "digitar", "type"), Text(item, "teclas", "keys")));
         }
         return entries;
     }
 
-    public async Task RunAsync(string name, Action<string> type)
+    /// <param name="openApp">Opens an installed app by name; false when no app is called that.</param>
+    public async Task RunAsync(string name, Action<string> type, Func<string, Task<bool>> openApp)
     {
         var entry = Entries.FirstOrDefault(e => e.Name == name) ?? throw new InvalidOperationException($"atalho “{name}” não existe mais");
-        if (entry.Open is { } open)
+        foreach (var open in entry.Open)
         {
-            var target = Environment.ExpandEnvironmentVariables(open);
-            Process.Start(new ProcessStartInfo(target) { UseShellExecute = true })?.Dispose();
-            await Task.Delay(600);  // let it come to the front before typing or pressing keys
+            if (!await openApp(open))
+            {
+                var target = Environment.ExpandEnvironmentVariables(open);
+                Process.Start(new ProcessStartInfo(target) { UseShellExecute = true })?.Dispose();
+            }
+            await Task.Delay(600);  // let it come to the front before the next one, typing or pressing keys
         }
         if (entry.Type is { } text) type(text);
         if (entry.Keys is { } keys)

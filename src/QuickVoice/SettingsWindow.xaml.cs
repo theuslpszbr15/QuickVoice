@@ -21,6 +21,10 @@ internal partial class SettingsWindow : Window
         WhisperRadio.IsChecked = settings.Recognizer == "whisper";
         WakeCheck.IsChecked = settings.WakeWord;
         WakeBox.Text = settings.WakePhrases;
+        Select(ThemeBox, settings.Theme);
+        Select(AccentBox, settings.Accent);
+        Select(SizeBox, settings.BarSize);
+        UpdatesCheck.IsChecked = settings.CheckUpdates;
         Loaded += (_, _) => Activate();
     }
 
@@ -33,6 +37,10 @@ internal partial class SettingsWindow : Window
         settings.Hotkey = TagOf(HotkeyBox) ?? "auto";
         settings.WakeWord = WakeCheck.IsChecked == true;
         settings.WakePhrases = string.IsNullOrWhiteSpace(WakeBox.Text) ? "QuickVoice" : WakeBox.Text.Trim();
+        settings.Theme = TagOf(ThemeBox) ?? "dark";
+        settings.Accent = TagOf(AccentBox) ?? "yellow";
+        settings.BarSize = TagOf(SizeBox) ?? "normal";
+        settings.CheckUpdates = UpdatesCheck.IsChecked == true;
         DialogResult = true;
     }
 

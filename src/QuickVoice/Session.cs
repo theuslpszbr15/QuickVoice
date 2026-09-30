@@ -20,6 +20,8 @@ internal sealed class Session
     public Func<bool> StillSpeaking { get; set; } = () => false;
     /// <summary>Always-listening mode: only speech that starts with one of these phrases is acted on.</summary>
     public IReadOnlyList<string> WakePhrases { get; set; } = [];
+    /// <summary>Where each utterance is recorded; null in the terminal-only --text mode.</summary>
+    public History? History { get; set; }
 
     private IDecider decider;
     private readonly LocalDecider local = new();
@@ -41,6 +43,9 @@ internal sealed class Session
     private bool dictating;
     private int dictatedWords;
     private bool dictationCapital;
+    /// <summary>What the last utterance did, for "repete".</summary>
+    private List<Command> lastCommands = [];
+    private bool answerShown;
 
     private static readonly string[][] DictationStops =
         [["fim", "do", "ditado"], ["para", "o", "ditado"], ["parar", "o", "ditado"], ["parar", "ditado"], ["para", "ditado"],
@@ -64,6 +69,11 @@ internal sealed class Session
     public void Heard(string text)
     {
         if (text == transcript) return;  // only new words count as speech
+        if (transcript.Length == 0 && answerShown && Bar is not null)
+        {
+            Bar.Notice = null;  // the last answer was read; a new question is coming
+            answerShown = false;
+        }
         transcript = text;
         lastWordAt = clock.Elapsed;
         log?.Write("heard", new() { ["utterance"] = utterance, ["text"] = text });
@@ -184,7 +194,19 @@ internal sealed class Session
             else StopDictation();
             return;  // the words after it are dictated, not asked about
         }
-        if (step.Command is { } command)
+        if (step.Command is Command.Control { Action: SystemAction.Repeat } repeat)
+        {
+            log?.Write("fire", new() { ["utterance"] = utterance, ["command"] = repeat.ToString() });
+            Terminal.Out($"\n⚡ {repeat}\n");
+            Bar?.Fire(repeat, Display.Words(Said(), engine.Consumed));
+            if (lastCommands.Count == 0 && Bar is not null) Bar.Notice = "Nada para repetir ainda.";
+            foreach (var again in lastCommands)
+            {
+                fired.Add((again, clock.Elapsed));
+                commands = RunAfter(commands, again, utterance);
+            }
+        }
+        else if (step.Command is { } command)
         {
             fired.Add((command, clock.Elapsed));
             log?.Write("fire", new() { ["utterance"] = utterance, ["command"] = command.ToString() });
@@ -203,6 +225,16 @@ internal sealed class Session
         var failure = await executor.RunAsync(command);
         log?.Write("run", new() { ["utterance"] = utterance, ["command"] = command.ToString(), ["ok"] = failure is null, ["error"] = failure });
         if (failure is not null && Bar is not null) Bar.Notice = failure;
+        if (failure is null && command is Command.Answer answer)
+        {
+            var text = QuickAnswers.Speak(answer, DateTime.UtcNow);
+            Terminal.Out($"\n💬 {text}\n");
+            if (Bar is not null)
+            {
+                Bar.Notice = answer.Kind == "math" ? $"{text}  (copiado)" : text;
+                answerShown = true;
+            }
+        }
         if (command is Command.OpenApp open && frontmostHint == open.App) frontmostHint = null;
     }
 
@@ -325,6 +357,9 @@ internal sealed class Session
             if (leads.Count > 0) Terminal.Out("\n");  // leave the live line
             foreach (var (command, seconds) in leads) Terminal.Out($"✓ {command} · {Display.DescribeLead(seconds)}\n");
             Bar?.Finish(leads.Select(l => Display.DescribeLead(l.Seconds)).ToList());
+            var done = fired.Select(f => f.Command).Where(c => c is not Command.Control { Action: SystemAction.Undo }).ToList();
+            if (done.Count > 0) lastCommands = done;
+            if (fired.Count > 0) History?.Add(transcript, fired.Select(f => f.Command.ToString()));
             fired.Clear();
             transcript = "";
             utterance++;

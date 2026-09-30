@@ -48,3 +48,5 @@ Name: "{autodesktop}\QuickVoice"; Filename: "{app}\QuickVoice.exe"; Tasks: deskt
 
 [Run]
 Filename: "{app}\QuickVoice.exe"; Description: "{cm:LaunchProgram,QuickVoice}"; Flags: nowait postinstall skipifsilent
+; A silent install is the app updating itself: start it again.
+Filename: "{app}\QuickVoice.exe"; Parameters: "--restarted"; Flags: nowait skipifnotsilent

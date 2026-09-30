@@ -7,12 +7,24 @@
         FontFamily="Segoe UI Variable Text, Segoe UI" Foreground="White"
         UseLayoutRounding="True" TextOptions.TextFormattingMode="Display">
     <Window.Resources>
+        <!-- Defaults (dark, yellow); BarWindow.ApplyTheme replaces them from the settings. -->
         <SolidColorBrush x:Key="Fire" Color="#FFD60A"/>
+        <SolidColorBrush x:Key="FireInk" Color="Black"/>
+        <SolidColorBrush x:Key="Panel" Color="#F5424246"/>
+        <SolidColorBrush x:Key="Ink" Color="White"/>
+        <SolidColorBrush x:Key="Ink08" Color="#14FFFFFF"/>
+        <SolidColorBrush x:Key="Ink14" Color="#24FFFFFF"/>
+        <SolidColorBrush x:Key="Ink24" Color="#3DFFFFFF"/>
+        <SolidColorBrush x:Key="Ink33" Color="#55FFFFFF"/>
+        <SolidColorBrush x:Key="Ink45" Color="#73FFFFFF"/>
+        <SolidColorBrush x:Key="Ink50" Color="#80FFFFFF"/>
+        <SolidColorBrush x:Key="Ink55" Color="#8CFFFFFF"/>
+        <SolidColorBrush x:Key="Ink70" Color="#B3FFFFFF"/>
         <Style x:Key="RoundButton" TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="{DynamicResource Ink}"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Focusable" Value="False"/>
-            <Setter Property="Background" Value="#24FFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource Ink14}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
@@ -21,10 +33,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Disc" Property="Background" Value="#3DFFFFFF"/>
+                                <Setter TargetName="Disc" Property="Background" Value="{DynamicResource Ink24}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Disc" Property="Background" Value="#55FFFFFF"/>
+                                <Setter TargetName="Disc" Property="Background" Value="{DynamicResource Ink33}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -33,14 +45,14 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="24,8,24,32" Width="520">
+    <Grid x:Name="Root" Margin="24,8,24,32" Width="520">
         <!-- Shadow on its own layer so the text above stays crisp. -->
-        <Border x:Name="Shadow" CornerRadius="22" Background="#F5424246">
+        <Border x:Name="Shadow" CornerRadius="22" Background="{DynamicResource Panel}">
             <Border.Effect>
                 <DropShadowEffect BlurRadius="32" ShadowDepth="10" Direction="270" Opacity="0.28" Color="#1E2A3A"/>
             </Border.Effect>
         </Border>
-        <Border x:Name="Card" CornerRadius="22" Background="Transparent" BorderBrush="#14FFFFFF" BorderThickness="1"
+        <Border x:Name="Card" CornerRadius="22" Background="Transparent" BorderBrush="{DynamicResource Ink08}" BorderThickness="1"
                 MouseLeftButtonDown="OnDrag">
             <StackPanel>
                 <Grid Height="44" Margin="8,0,7,0">
@@ -69,8 +81,8 @@
                     <!-- Write mode: type a command instead of saying it. -->
                     <Grid x:Name="WriteBox" Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center" Visibility="Collapsed">
                         <TextBlock x:Name="InputHint" Text="Escreva um comando…  (Enter executa, Esc cancela)" FontSize="15"
-                                   Foreground="#73FFFFFF" IsHitTestVisible="False" Margin="2,0,0,0"/>
-                        <TextBox x:Name="Input" FontSize="15" Foreground="White" CaretBrush="White" Background="Transparent"
+                                   Foreground="{DynamicResource Ink45}" IsHitTestVisible="False" Margin="2,0,0,0"/>
+                        <TextBox x:Name="Input" FontSize="15" Foreground="{DynamicResource Ink}" CaretBrush="{DynamicResource Ink}" Background="Transparent"
                                  BorderThickness="0" Padding="0" SelectionBrush="#6630D158"
                                  KeyDown="OnInputKey" TextChanged="OnInputChanged"/>
                     </Grid>
@@ -78,28 +90,28 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button x:Name="WriteButton" Style="{StaticResource RoundButton}" Background="Transparent" Click="OnWrite"
                                 Margin="0,0,4,0">
-                            <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Text="&#xE765;" Foreground="#B3FFFFFF"/>
+                            <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="14" Text="&#xE765;" Foreground="{DynamicResource Ink70}"/>
                         </Button>
-                        <Border x:Name="HotkeyChip" CornerRadius="11" Height="22" Padding="8,0" Background="#14FFFFFF" Margin="0,0,4,0">
-                            <TextBlock x:Name="HotkeyText" FontSize="11" FontWeight="SemiBold" Foreground="#80FFFFFF" VerticalAlignment="Center"/>
+                        <Border x:Name="HotkeyChip" CornerRadius="11" Height="22" Padding="8,0" Background="{DynamicResource Ink08}" Margin="0,0,4,0">
+                            <TextBlock x:Name="HotkeyText" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Ink50}" VerticalAlignment="Center"/>
                         </Border>
-                        <Border x:Name="FireChip" CornerRadius="15" Height="30" Padding="12,0" Background="{StaticResource Fire}" Visibility="Collapsed">
+                        <Border x:Name="FireChip" CornerRadius="15" Height="30" Padding="12,0" Background="{DynamicResource Fire}" Visibility="Collapsed">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE945;" FontSize="12" Foreground="Black"
+                                <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE945;" FontSize="12" Foreground="{DynamicResource FireInk}"
                                            VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                <TextBlock x:Name="FireText" FontSize="13" FontWeight="SemiBold" Foreground="Black" MaxWidth="220"
+                                <TextBlock x:Name="FireText" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource FireInk}" MaxWidth="220"
                                            TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Border>
-                        <TextBlock x:Name="StateText" FontSize="12" Foreground="#8CFFFFFF" Margin="0,0,9,0" Visibility="Collapsed"/>
+                        <TextBlock x:Name="StateText" FontSize="12" Foreground="{DynamicResource Ink55}" Margin="0,0,9,0" Visibility="Collapsed"/>
                     </StackPanel>
                 </Grid>
 
-                <Border x:Name="Tray" BorderBrush="#14FFFFFF" BorderThickness="0,1,0,0" Visibility="Collapsed">
+                <Border x:Name="Tray" BorderBrush="{DynamicResource Ink08}" BorderThickness="0,1,0,0" Visibility="Collapsed">
                     <StackPanel Margin="16,10,16,14">
                         <Grid Margin="0,0,0,9">
-                            <TextBlock Text="LEITURA DO JEV" FontSize="11" FontWeight="SemiBold" Foreground="#80FFFFFF"/>
-                            <TextBlock Text="no meio da frase a 0,80" FontSize="11" FontWeight="SemiBold" Foreground="#80FFFFFF" HorizontalAlignment="Right"/>
+                            <TextBlock Text="LEITURA DO JEV" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Ink50}"/>
+                            <TextBlock Text="no meio da frase a 0,80" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Ink50}" HorizontalAlignment="Right"/>
                         </Grid>
                         <StackPanel x:Name="Meters"/>
                         <WrapPanel x:Name="Tags" MinHeight="26" Margin="0,2,0,0"/>

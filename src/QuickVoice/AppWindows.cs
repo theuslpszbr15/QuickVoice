@@ -10,7 +10,10 @@ internal static class AppWindows
     /// The frontmost matching window, trying the surest signal first: the app id Windows groups it by, then the
     /// executable, then what the program calls itself, then the window title ("Sem título – Bloco de Notas").
     /// </summary>
-    public static nint Find(string name, string target)
+    public static nint Find(string name, string target) => FindAll(name, target).FirstOrDefault();
+
+    /// <summary>Every window of the app, surest matches first (all of one strength: "fecha o chrome" closes every Chrome window).</summary>
+    public static List<nint> FindAll(string name, string target)
     {
         var path = Win32.KnownFolderPath(target);
         var isAppId = target.Contains('!') || (!target.Contains('\\') && path is null);
@@ -35,7 +38,9 @@ internal static class AppWindows
             return true;
         }, 0);
 
-        return matches.OrderByDescending(m => m.Strength).Select(m => m.Window).FirstOrDefault();  // stable: z-order within a strength
+        if (matches.Count == 0) return [];
+        var best = matches.Max(m => m.Strength);
+        return matches.Where(m => m.Strength == best).Select(m => m.Window).ToList();  // z-order: the frontmost first
     }
 
     /// <summary>Store apps draw inside ApplicationFrameHost: the app's own process owns a child window.</summary>

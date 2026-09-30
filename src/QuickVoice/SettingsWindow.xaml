@@ -58,6 +58,35 @@
         <TextBlock Style="{StaticResource Hint}" Margin="22,6,0,0"
                    Text="Separe variações por vírgula. Ex.: “QuickVoice, abre o chrome”. Com o reconhecimento do Windows, o áudio vai continuamente para a Microsoft; com o Whisper, fica no PC."/>
 
+        <TextBlock Text="Aparência da barra" Style="{StaticResource Heading}"/>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="ThemeBox" Height="28" ToolTip="Tema">
+                <ComboBoxItem Tag="dark" Content="Escuro"/>
+                <ComboBoxItem Tag="light" Content="Claro"/>
+            </ComboBox>
+            <ComboBox x:Name="AccentBox" Grid.Column="2" Height="28" ToolTip="Cor de destaque">
+                <ComboBoxItem Tag="yellow" Content="Amarelo"/>
+                <ComboBoxItem Tag="blue" Content="Azul"/>
+                <ComboBoxItem Tag="green" Content="Verde"/>
+                <ComboBoxItem Tag="pink" Content="Rosa"/>
+            </ComboBox>
+            <ComboBox x:Name="SizeBox" Grid.Column="4" Height="28" ToolTip="Tamanho">
+                <ComboBoxItem Tag="small" Content="Pequena"/>
+                <ComboBoxItem Tag="normal" Content="Normal"/>
+                <ComboBoxItem Tag="large" Content="Grande"/>
+            </ComboBox>
+        </Grid>
+
+        <TextBlock Text="Atualizações" Style="{StaticResource Heading}"/>
+        <CheckBox x:Name="UpdatesCheck" Content="Procurar uma versão nova no GitHub ao iniciar"/>
+
         <TextBlock Text="Mais" Style="{StaticResource Heading}"/>
         <WrapPanel>
             <Button Content="Editar meus atalhos…" Click="OnShortcuts"/>

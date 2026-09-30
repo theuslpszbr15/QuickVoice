@@ -5,7 +5,7 @@ namespace QuickVoice.Core;
 /// Open actions carry free text: only the pause says the text is done ("search norbert" vs "search norbert wiener").
 /// Control, Click and Shortcut come only from the local rules (Jev is never asked about them) and act at the pause.
 /// </summary>
-public enum ActionKind { OpenApp, NewItem, OpenUrl, WebSearch, TypeText, Control, Click, Shortcut, None }
+public enum ActionKind { OpenApp, NewItem, OpenUrl, WebSearch, TypeText, Control, Click, Shortcut, CloseApp, OpenFolder, OpenRecent, Answer, None }
 
 public static class ActionKinds
 {
@@ -15,7 +15,9 @@ public static class ActionKinds
     public static readonly ActionKind[] Jev =
         [ActionKind.OpenApp, ActionKind.NewItem, ActionKind.OpenUrl, ActionKind.WebSearch, ActionKind.TypeText, ActionKind.None];
 
-    public static bool IsLocalOnly(this ActionKind action) => action is ActionKind.Control or ActionKind.Click or ActionKind.Shortcut;
+    public static bool IsLocalOnly(this ActionKind action) =>
+        action is ActionKind.Control or ActionKind.Click or ActionKind.Shortcut or ActionKind.CloseApp
+            or ActionKind.OpenFolder or ActionKind.OpenRecent or ActionKind.Answer;
 
     /// <summary>The wire name Jev knows the action by.</summary>
     public static string RawValue(this ActionKind action) => action switch
@@ -28,6 +30,10 @@ public static class ActionKinds
         ActionKind.Control => "control",
         ActionKind.Click => "click",
         ActionKind.Shortcut => "shortcut",
+        ActionKind.CloseApp => "close_app",
+        ActionKind.OpenFolder => "open_folder",
+        ActionKind.OpenRecent => "open_recent",
+        ActionKind.Answer => "answer",
         _ => "none",
     };
 
@@ -44,6 +50,10 @@ public static class ActionKinds
         ActionKind.Control => "sistema",
         ActionKind.Click => "clicar",
         ActionKind.Shortcut => "atalho",
+        ActionKind.CloseApp => "fechar app",
+        ActionKind.OpenFolder => "abrir pasta",
+        ActionKind.OpenRecent => "arquivo recente",
+        ActionKind.Answer => "responder",
         _ => "ainda não",
     };
 }
