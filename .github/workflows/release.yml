@@ -1,0 +1,40 @@
+name: Release
+
+# Push a tag like v1.1.0 to build the installer and the portable zip and publish them as a GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Test
+        run: dotnet test QuickVoice.slnx -c Release
+      - name: Publish
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          "VERSION=$version" >> $env:GITHUB_ENV
+          dotnet publish src/QuickVoice -c Release -r win-x64 --self-contained true -p:Version=$version -o publish/QuickVoice
+          Compress-Archive -Path publish/QuickVoice/* -DestinationPath "QuickVoice-$version-win-x64-portable.zip"
+      - name: Installer
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" "/DSourceDir=$PWD\publish\QuickVoice" installer\QuickVoice.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" "installer/Output/QuickVoice-Setup-$env:VERSION.exe" "QuickVoice-$env:VERSION-win-x64-portable.zip" `
+            --title "QuickVoice ${{ github.ref_name }}" --generate-notes

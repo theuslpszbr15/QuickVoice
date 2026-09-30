@@ -12,6 +12,15 @@ internal sealed class Hotkey : IDisposable
     public static readonly (uint Modifiers, string Label)[] Write =
         [(Native.MOD_ALT | Native.MOD_SHIFT, "Alt+Shift+Espaço"), (Native.MOD_CONTROL | Native.MOD_ALT | Native.MOD_SHIFT, "Ctrl+Alt+Shift+Espaço")];
 
+    /// <summary>The listen shortcut chosen in the settings; "auto" tries the defaults in order.</summary>
+    public static (uint Modifiers, string Label)[] ListenFor(string choice) => choice switch
+    {
+        "alt" => [Listen[0]],
+        "ctrl-alt" => [Listen[1]],
+        "ctrl-shift" => [(Native.MOD_CONTROL | Native.MOD_SHIFT, "Ctrl+Shift+Espaço")],
+        _ => Listen,
+    };
+
     private readonly nint hwnd;
     private readonly int id;
     private readonly Action pressed;

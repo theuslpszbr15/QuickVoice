@@ -7,7 +7,7 @@ using Drawing = System.Drawing;
 namespace QuickVoice;
 
 /// <summary>The app: the floating bar, a hotkey to start or pause listening, and a tray icon with a menu.</summary>
-internal sealed class AppController(Session session, BarModel model, Options options, EventLog? log)
+internal sealed class AppController(Session session, BarModel model, Options options, Settings settings, EventLog? log)
 {
     private BarWindow? bar;
     private Hotkey? hotkey;
@@ -15,7 +15,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
     private Forms.NotifyIcon? tray;
     private Forms.ToolStripMenuItem? toggleItem;
     private Drawing.Icon? idleIcon, listeningIcon;
-    private Listener? listener;
+    private IListener? listener;
     private bool listening;
     private bool busy;
 
@@ -26,7 +26,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         model.Toggle = Toggle;
         model.Submit = session.Submit;
         var handle = new WindowInteropHelper(bar).Handle;
-        hotkey = new Hotkey(handle, 0x4A56, Hotkey.Listen, Toggle);
+        hotkey = new Hotkey(handle, 0x4A56, Hotkey.ListenFor(settings.Hotkey), Toggle);
         writeHotkey = new Hotkey(handle, 0x4A57, Hotkey.Write, bar.BeginWrite);
         model.Hotkey = hotkey.Label ?? "sem atalho";
         model.WriteHotkey = writeHotkey.Label ?? "botão ⌨";
@@ -36,7 +36,19 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         {
             if (listening) listener?.Restart();
         };
-        if (hotkey.Label is null) model.Notice = "Alt+Espaço e Ctrl+Alt+Espaço estão em uso por outro app: use o botão ▶.";
+        if (hotkey.Label is null) model.Notice = "O atalho escolhido está em uso por outro app: use o botão ▶ ou troque em Configurações.";
+        if (settings.WakeWord && settings.WakeList.Count > 0)
+        {
+            session.WakePhrases = settings.WakeList;
+            Toggle();  // always listening, waiting for its name
+        }
+    }
+
+    /// <summary>The user's shortcuts file, in Notepad.</summary>
+    private void OpenShortcuts()
+    {
+        new Shortcuts().Reload();  // creates the commented sample the first time
+        Process.Start(new ProcessStartInfo("notepad.exe", $"\"{Shortcuts.FilePath}\""))?.Dispose();
     }
 
     /// <summary>Optional: with a Jev key the decisions come from Jev instead of the local rules.</summary>
@@ -77,9 +89,13 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         {
             if (listener is null)
             {
-                var made = await Listener.CreateAsync(options.Locale, bar!.Dispatcher);
+                var locale = options.Locale ?? settings.Locale;
+                IListener made = settings.Recognizer == "whisper"
+                    ? await WhisperListener.CreateAsync(locale, settings.WhisperModel, bar!.Dispatcher, message => model.Notice = message)
+                    : await Listener.CreateAsync(locale, bar!.Dispatcher);
                 made.Partial += session.Heard;
                 made.Ended += OnRecognizerEnded;
+                session.StillSpeaking = () => made.Speaking;
                 listener = made;
             }
             await listener.StartAsync();
@@ -90,14 +106,15 @@ internal sealed class AppController(Session session, BarModel model, Options opt
             if (error.OpenSettings is { } page) Process.Start(new ProcessStartInfo(page) { UseShellExecute = true })?.Dispose();
             return;
         }
-        catch (Exception error) when (error is System.Runtime.InteropServices.COMException or InvalidOperationException)
+        catch (Exception error) when (error is System.Runtime.InteropServices.COMException or InvalidOperationException
+                                          or System.Net.Http.HttpRequestException or IOException or DllNotFoundException or NAudio.MmException)
         {
-            model.Notice = $"O microfone não iniciou: {error.Message}";
+            model.Notice = settings.Recognizer == "whisper" ? $"O Whisper não iniciou: {error.Message}" : $"O microfone não iniciou: {error.Message}";
             return;
         }
         listening = true;
         model.Listening = true;
-        model.Notice = null;
+        model.Notice = session.WakePhrases.Count > 0 ? $"Sempre ouvindo: comece com “{session.WakePhrases[0]}”, ex. “{session.WakePhrases[0]}, abre o chrome”." : null;
         ShowState();
         log?.Write("listening", new() { ["language"] = listener.Language });
         Terminal.Out($"🎙 ouvindo em {listener.Language}\n");
@@ -136,6 +153,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
     {
         hotkey?.Dispose();
         writeHotkey?.Dispose();
+        (listener as IDisposable)?.Dispose();
         if (tray is not null)
         {
             tray.Visible = false;
@@ -143,6 +161,25 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         }
         log?.Dispose();
         System.Windows.Application.Current.Shutdown();
+    }
+
+    private void OpenSettings()
+    {
+        var dialog = new SettingsWindow(settings, PromptForKey);
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            settings.Save();
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            model.Notice = $"As configurações não foram salvas: {error.Message}";
+            return;
+        }
+        var answer = MessageBox.Show("Reiniciar o QuickVoice agora para aplicar?", "QuickVoice", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (answer != MessageBoxResult.Yes) return;
+        Process.Start(new ProcessStartInfo(Environment.ProcessPath!, "--restarted") { UseShellExecute = false })?.Dispose();
+        Quit();
     }
 
     /// <summary>The tray icon and its menu say whether QuickVoice is listening.</summary>
@@ -164,6 +201,8 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         menu.Items.Add(new Forms.ToolStripMenuItem("Usar chave do Jev (opcional, pago)…", null, (_, _) => PromptForKey()));
         menu.Items.Add(new Forms.ToolStripMenuItem($"Escrever um comando ({model.WriteHotkey})", null, (_, _) => bar?.BeginWrite()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Mostrar a barra", null, (_, _) => bar?.Show()));
+        menu.Items.Add(new Forms.ToolStripMenuItem("Configurações…", null, (_, _) => OpenSettings()));
+        menu.Items.Add(new Forms.ToolStripMenuItem("Editar meus atalhos…", null, (_, _) => OpenShortcuts()));
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(new Forms.ToolStripMenuItem("Sair do QuickVoice", null, (_, _) => Quit()));
         var icon = new Forms.NotifyIcon { ContextMenuStrip = menu, Visible = true };

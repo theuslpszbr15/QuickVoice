@@ -10,12 +10,13 @@ namespace QuickVoice;
 internal sealed class EventLog : IDisposable
 {
     public string Path { get; }
+    public static string Folder => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "QuickVoice", "Logs");
     private readonly StreamWriter file;
     private readonly Stopwatch started = Stopwatch.StartNew();
 
     public EventLog()
     {
-        var folder = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "QuickVoice", "Logs");
+        var folder = Folder;
         Directory.CreateDirectory(folder);
         Path = System.IO.Path.Combine(folder, $"{DateTime.Now:yyyy-MM-ddTHH-mm-ss}.jsonl");
         file = new StreamWriter(Path, append: false) { AutoFlush = true };

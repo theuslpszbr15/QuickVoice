@@ -5,16 +5,30 @@ using QuickVoice.Core;
 
 namespace QuickVoice;
 
+/// <summary>Microphone to text: partials of the whole utterance so far, and an event when recognition stops by itself.</summary>
+internal interface IListener
+{
+    event Action<string>? Partial;
+    event Action<string>? Ended;
+    string Language { get; }
+    /// <summary>Still hearing a voice though no new words came yet (Whisper transcribes in bursts): the pause must wait.</summary>
+    bool Speaking { get; }
+    Task StartAsync();
+    Task StopAsync();
+    void Restart();
+}
+
 /// <summary>
 /// Microphone → Windows speech recognition (dictation), with partial results.
 /// Windows reports one phrase at a time; this joins the phrases of the current utterance so the
 /// session always sees the whole utterance so far, like the Apple recognizer the original used.
 /// </summary>
-internal sealed class Listener
+internal sealed class Listener : IListener
 {
     public event Action<string>? Partial;
     public event Action<string>? Ended;
     public string Language { get; }
+    public bool Speaking => false;
 
     private readonly SpeechRecognizer recognizer;
     private readonly Dispatcher dispatcher;

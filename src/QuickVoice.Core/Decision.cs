@@ -9,6 +9,8 @@ public sealed class Decision
     public string? App { get; init; }
     public double AppProbability { get; init; }
     public string? Argument { get; init; }
+    /// <summary>Which system control (<see cref="Controls"/>) or custom shortcut the words name; the local rules fill it.</summary>
+    public string? Detail { get; init; }
     /// <summary>"Is the command fully stated?" Shown, never used to fire: it swings on dangling words ("for", "and").</summary>
     public double Complete { get; init; }
     /// <summary>

@@ -23,6 +23,8 @@ internal sealed class Options
     public string? Locale { get; private set; }
     public double Wpm { get; private set; } = 160;
     public bool Help { get; private set; }
+    /// <summary>Started by the app itself after a settings change: wait for the old instance to exit.</summary>
+    public bool Restarted { get; private set; }
 
     public static Options Parse(string[] args)
     {
@@ -36,6 +38,7 @@ internal sealed class Options
                 case "--write": options.Write = true; break;
                 case "--log": options.Log = true; break;
                 case "--help" or "-h": options.Help = true; break;
+                case "--restarted": options.Restarted = true; break;
                 case "--text": options.Text = Value(flag, queue); break;
                 case "--locale": options.Locale = Value(flag, queue); break;
                 case "--wpm":

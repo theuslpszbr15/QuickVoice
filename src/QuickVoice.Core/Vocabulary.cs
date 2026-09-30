@@ -18,6 +18,8 @@ public static class Vocabulary
         "search", "look", "find", "type", "write", "open", "go", "enter",
         "pesquisa", "pesquisar", "pesquise", "procura", "procurar", "busca", "buscar",
         "digita", "digitar", "digite", "escreve", "escrever", "escreva", "abre", "abrir", "abra", "vai", "ir", "entra", "entrar",
+        "fecha", "fechar", "feche", "minimiza", "maximiza", "aumenta", "diminui", "abaixa", "clica", "clique", "clicar",
+        "click", "close", "minimize", "maximize", "mute", "volume",
     ];
 
     /// <summary>An argument never starts with these ("digita | ls", "e | bom dia")...</summary>

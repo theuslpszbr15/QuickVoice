@@ -8,6 +8,12 @@ public abstract record Command
     public sealed record OpenUrl(Uri Url) : Command;
     public sealed record WebSearch(string Query) : Command;
     public sealed record TypeText(string Text) : Command;
+    /// <summary>A window, sound, media or session control: "fecha isso", "volume 50", "tira um print".</summary>
+    public sealed record Control(SystemAction Action, int? Value = null) : Command;
+    /// <summary>Clicks the button, link or menu item with this name in the window in front.</summary>
+    public sealed record Click(string Target) : Command;
+    /// <summary>One of the user's own shortcuts, by name.</summary>
+    public sealed record Shortcut(string Name) : Command;
 
     public sealed override string ToString() => this switch
     {
@@ -16,6 +22,9 @@ public abstract record Command
         OpenUrl c => $"abrir {c.Url.OriginalString}",
         WebSearch c => $"pesquisar “{c.Query}”",
         TypeText c => $"digitar “{c.Text}”",
+        Control c => Controls.Describe(c.Action, c.Value),
+        Click c => $"clicar em “{c.Target}”",
+        Shortcut c => $"atalho “{c.Name}”",
         _ => GetType().Name,
     };
 

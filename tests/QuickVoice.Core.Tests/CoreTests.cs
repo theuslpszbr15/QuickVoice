@@ -121,7 +121,7 @@ public class QuestionsTests
         Assert.Equal("noul", questions.GetProperty("complete").GetProperty("type").GetString());
         Assert.Equal("noul", questions.GetProperty("opens_app").GetProperty("type").GetString());
         var actions = questions.GetProperty("action").GetProperty("criteria");
-        Assert.Equal(ActionKinds.All.Select(a => a.RawValue()).ToHashSet(), Keys(actions));
+        Assert.Equal(ActionKinds.Jev.Select(a => a.RawValue()).ToHashSet(), Keys(actions));
         Assert.Equal(JsonValueKind.String, actions.GetProperty("type_text").GetProperty("what").ValueKind);
         Assert.Equal(JsonValueKind.Array, actions.GetProperty("type_text").GetProperty("examples").ValueKind);
     }

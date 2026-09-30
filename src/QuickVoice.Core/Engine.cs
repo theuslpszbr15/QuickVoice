@@ -105,9 +105,10 @@ public sealed class Engine
     private ActionKind[][] Outcomes(Decision d)
     {
         var namesBrowser = d.App is { } app && Browsers.Contains(app);
+        ActionKind[][] local = [[ActionKind.Control], [ActionKind.Click], [ActionKind.Shortcut]];
         return namesBrowser
-            ? [[ActionKind.OpenUrl, ActionKind.WebSearch, ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText]]
-            : [[ActionKind.OpenUrl, ActionKind.WebSearch], [ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText]];
+            ? [[ActionKind.OpenUrl, ActionKind.WebSearch, ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText], .. local]
+            : [[ActionKind.OpenUrl, ActionKind.WebSearch], [ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText], .. local];
     }
 
     /// <summary>
@@ -148,7 +149,10 @@ public sealed class Engine
         ActionKind.NewItem => new Command.NewItem(),
         ActionKind.OpenUrl => d.Argument is { } a && Site.Url(a) is { } url ? new Command.OpenUrl(url) : null,
         ActionKind.WebSearch => d.Argument is { } q ? new Command.WebSearch(q) : null,
-        ActionKind.TypeText => d.Argument is { } t ? new Command.TypeText(t) : null,
+        ActionKind.TypeText => d.Argument is { } t ? new Command.TypeText(Dictation.Format(t, bareDot: false)) : null,
+        ActionKind.Control => d.Detail is { } code ? Controls.Decode(code) : null,
+        ActionKind.Click => d.Argument is { } target ? new Command.Click(target) : null,
+        ActionKind.Shortcut => d.Detail is { } name ? new Command.Shortcut(name) : null,
         _ => null,
     };
 

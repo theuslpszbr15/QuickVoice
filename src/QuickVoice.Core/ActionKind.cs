@@ -3,12 +3,19 @@ namespace QuickVoice.Core;
 /// <summary>
 /// What the computer can do. Closed actions (OpenApp, NewItem) pick from a known list, so they may fire mid-sentence.
 /// Open actions carry free text: only the pause says the text is done ("search norbert" vs "search norbert wiener").
+/// Control, Click and Shortcut come only from the local rules (Jev is never asked about them) and act at the pause.
 /// </summary>
-public enum ActionKind { OpenApp, NewItem, OpenUrl, WebSearch, TypeText, None }
+public enum ActionKind { OpenApp, NewItem, OpenUrl, WebSearch, TypeText, Control, Click, Shortcut, None }
 
 public static class ActionKinds
 {
     public static readonly ActionKind[] All = Enum.GetValues<ActionKind>();
+
+    /// <summary>The actions Jev is asked to choose among; the rest come only from the local rules.</summary>
+    public static readonly ActionKind[] Jev =
+        [ActionKind.OpenApp, ActionKind.NewItem, ActionKind.OpenUrl, ActionKind.WebSearch, ActionKind.TypeText, ActionKind.None];
+
+    public static bool IsLocalOnly(this ActionKind action) => action is ActionKind.Control or ActionKind.Click or ActionKind.Shortcut;
 
     /// <summary>The wire name Jev knows the action by.</summary>
     public static string RawValue(this ActionKind action) => action switch
@@ -18,6 +25,9 @@ public static class ActionKinds
         ActionKind.OpenUrl => "open_url",
         ActionKind.WebSearch => "web_search",
         ActionKind.TypeText => "type_text",
+        ActionKind.Control => "control",
+        ActionKind.Click => "click",
+        ActionKind.Shortcut => "shortcut",
         _ => "none",
     };
 
@@ -31,6 +41,9 @@ public static class ActionKinds
         ActionKind.OpenUrl => "abrir site",
         ActionKind.WebSearch => "pesquisar",
         ActionKind.TypeText => "digitar",
+        ActionKind.Control => "sistema",
+        ActionKind.Click => "clicar",
+        ActionKind.Shortcut => "atalho",
         _ => "ainda não",
     };
 }

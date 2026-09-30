@@ -28,14 +28,27 @@ internal static class Program
         }
 
         using var single = new Mutex(true, @"Local\QuickVoice", out var first);
+        if (!first && options.Restarted)
+        {
+            try
+            {
+                first = single.WaitOne(TimeSpan.FromSeconds(10));
+            }
+            catch (AbandonedMutexException)
+            {
+                first = true;
+            }
+        }
         if (!first && options.Text is null) return 0;  // the bar is already up
 
         var key = ApiKey.Load();
         var apps = InstalledApps.Load();
+        var settings = Settings.Load();
+        var shortcuts = new Shortcuts();
         var log = options.Log ? new EventLog() : null;
         if (log is not null) Terminal.Out($"📝 gravando em {log.Path}\n");
         log?.Write("start", new() { ["mode"] = options.Text is null ? "app" : "text", ["dry_run"] = options.DryRun, ["apps"] = apps.Names.Count });
-        var session = new Session(key is null ? new LocalDecider() : new JevClient(key), apps, new Executor(apps, options.DryRun), log);
+        var session = new Session(key is null ? new LocalDecider() : new JevClient(key), apps, new Executor(apps, shortcuts, options.DryRun), shortcuts, log);
 
         if (options.Text is { } text)
         {
@@ -59,7 +72,7 @@ internal static class Program
 
         var model = new BarModel();
         session.Bar = model;
-        var controller = new AppController(session, model, options, log);
+        var controller = new AppController(session, model, options, settings, log);
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         app.Startup += (_, _) => controller.Start();
         app.Run();
