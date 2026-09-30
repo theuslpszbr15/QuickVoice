@@ -28,7 +28,15 @@ internal partial class BarWindow : Window
     private Brush IdleDisc => Ink(0x24);
 
     private readonly BarModel model;
+    /// <summary>The voice-reactive glow; the app plugs the microphone meter into it.</summary>
+    public VoiceGlow Glow { get; } = new();
     private readonly Storyboard wave = new() { RepeatBehavior = RepeatBehavior.Forever };
+
+    static BarWindow()
+    {
+        // Every animated frame repaints the whole layered window; 30 fps keeps the waveform smooth for half the CPU.
+        Timeline.DesiredFrameRateProperty.OverrideMetadata(typeof(Timeline), new FrameworkPropertyMetadata { DefaultValue = 30 });
+    }
     private bool waving;
     private bool wasExpanded;
     private nint hwnd;
@@ -39,7 +47,9 @@ internal partial class BarWindow : Window
     {
         this.model = model;
         InitializeComponent();
+        Root.Children.Insert(1, Glow);  // above the panel, below the text
         ApplyTheme(settings);
+        Glow.Apply(settings.VoiceGlow, settings.Theme == "light");
         BuildWave();
         model.Changed += () => Dispatcher.InvokeAsync(Render);
         Deactivated += (_, _) =>
@@ -50,12 +60,12 @@ internal partial class BarWindow : Window
         {
             var area = SystemParameters.WorkArea;
             Left = area.Left + (area.Width - ActualWidth) / 2;
-            Top = area.Top - 12;  // the pill sits where it always did; the extra margin is room to sway
-            lastLeft = Left;
+            Top = area.Top - 22;  // the pill sits where it always did; the extra margin is room to sway
             Render();
             Enter();
         };
-        LocationChanged += (_, _) => Sway();
+        Card.MouseLeftButtonUp += (_, _) => EndDrag();
+        Card.LostMouseCapture += (_, _) => EndDrag();
     }
 
     /// <summary>Drops in from above and fades in.</summary>
@@ -66,37 +76,64 @@ internal partial class BarWindow : Window
         Root.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(320)));
     }
 
-    // Sway: dragging pushes the pill's angle, a damped spring brings it back level.
-    private const double MaxTilt = 4, Stiffness = 170, Damping = 11;
-    private double tilt, tiltSpeed, lastLeft;
+    // Drag, as in React Bits' Shredder: the pill follows the hand on a critically damped spring (ω 30), leans with
+    // its horizontal speed (0.012° per px/s, up to 6°, eased over 0.09 s) and lifts to 1.02 while held.
+    private const double Follow = 30, MaxTilt = 6, LeanPerSpeed = 0.012, HeldScale = 1.02;
+    private bool dragging, moving;
+    private Point grab, target;
+    private double x, y, vx, vy, tilt, lift = 1;
     private TimeSpan lastFrame;
-    private bool swinging;
 
-    private void Sway()
+    /// <summary>The cursor in the same units as Left and Top, read from the screen (the window moves under it).</summary>
+    private Point CursorDip()
     {
-        var dx = Left - lastLeft;
-        lastLeft = Left;
-        if (Math.Abs(dx) < 0.5) return;
-        tiltSpeed = Math.Clamp(tiltSpeed - dx * 5, -160, 160);  // the leading end lifts, like something carried
-        if (swinging) return;
-        swinging = true;
-        lastFrame = TimeSpan.Zero;
-        CompositionTarget.Rendering += SwingFrame;
+        var (px, py) = Win32.Cursor();
+        var dpi = VisualTreeHelper.GetDpi(this);
+        return new Point(px / dpi.DpiScaleX, py / dpi.DpiScaleY);
     }
 
-    private void SwingFrame(object? sender, EventArgs e)
+    private void EndDrag()
+    {
+        if (!dragging) return;
+        dragging = false;
+        if (Card.IsMouseCaptured) Card.ReleaseMouseCapture();
+    }
+
+    private void DragFrame(object? sender, EventArgs e)
     {
         var now = ((RenderingEventArgs)e).RenderingTime;
-        var dt = lastFrame == TimeSpan.Zero ? 1 / 60.0 : Math.Min((now - lastFrame).TotalSeconds, 1 / 30.0);
+        var dt = lastFrame == TimeSpan.Zero ? 1 / 60.0 : Math.Clamp((now - lastFrame).TotalSeconds, 0, 0.05);
         lastFrame = now;
         if (dt <= 0) return;
-        tiltSpeed += (-Stiffness * tilt - Damping * tiltSpeed) * dt;
-        tilt = Math.Clamp(tilt + tiltSpeed * dt, -MaxTilt, MaxTilt);
+        if (dragging && !Win32.LeftButtonDown) EndDrag();
+        if (dragging)
+        {
+            var cursor = CursorDip();
+            target = new Point(cursor.X - grab.X, cursor.Y - grab.Y);
+        }
+        (x, vx) = Spring(x, vx, target.X, dt);
+        (y, vy) = Spring(y, vy, target.Y, dt);
+        Left = x;
+        Top = y;
+        var lean = dragging ? Math.Clamp(vx * LeanPerSpeed, -MaxTilt, MaxTilt) : 0;
+        tilt += (lean - tilt) * (1 - Math.Exp(-dt / 0.09));
+        lift += ((dragging ? HeldScale : 1) - lift) * (1 - Math.Exp(-dt / 0.12));
         Tilt.Angle = tilt;
-        if (Math.Abs(tilt) > 0.02 || Math.Abs(tiltSpeed) > 0.1) return;
-        Tilt.Angle = tilt = tiltSpeed = 0;
-        swinging = false;
-        CompositionTarget.Rendering -= SwingFrame;
+        Lift.ScaleX = Lift.ScaleY = lift;
+        if (dragging || Math.Abs(x - target.X) > 0.2 || Math.Abs(y - target.Y) > 0.2 || Math.Abs(tilt) > 0.02 || lift > 1.0005) return;
+        Tilt.Angle = 0;
+        Lift.ScaleX = Lift.ScaleY = lift = 1;
+        moving = false;
+        CompositionTarget.Rendering -= DragFrame;
+    }
+
+    /// <summary>A critically damped spring, exact for a frame of any length (the Shredder's).</summary>
+    private static (double P, double V) Spring(double p, double v, double to, double dt)
+    {
+        var offset = p - to;
+        var term = v + Follow * offset;
+        var decay = Math.Exp(-Follow * dt);
+        return (to + (offset + term * dt) * decay, (v - Follow * term * dt) * decay);
     }
 
     private SolidColorBrush Ink(byte alpha) => new(Color.FromArgb(alpha, ink.R, ink.G, ink.B));
@@ -196,12 +233,21 @@ internal partial class BarWindow : Window
     private void OnDrag(object sender, MouseButtonEventArgs e)
     {
         if (e.ButtonState != MouseButtonState.Pressed) return;
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        foreach (var property in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
-            Lift.BeginAnimation(property, new DoubleAnimation(1.03, TimeSpan.FromMilliseconds(140)) { EasingFunction = ease });
-        DragMove();  // returns when the button is released
-        foreach (var property in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
-            Lift.BeginAnimation(property, new DoubleAnimation(1, TimeSpan.FromMilliseconds(260)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } });
+        var cursor = CursorDip();
+        grab = new Point(cursor.X - Left, cursor.Y - Top);
+        if (!moving)
+        {
+            x = Left;
+            y = Top;
+            vx = vy = 0;
+        }
+        target = new Point(Left, Top);
+        dragging = true;
+        Card.CaptureMouse();
+        if (moving) return;
+        moving = true;
+        lastFrame = TimeSpan.Zero;
+        CompositionTarget.Rendering += DragFrame;
     }
 
     private void Render()
@@ -211,6 +257,8 @@ internal partial class BarWindow : Window
         ToggleButton.ToolTip = model.Listening ? $"Pausar ({model.Hotkey})" : $"Começar a ouvir ({model.Hotkey})";
         Wave.Visibility = model.Listening ? Visibility.Visible : Visibility.Collapsed;
         SetWaving(model.Listening);
+        Glow.Listening = model.Listening;
+        Glow.Processing = model.Processing;
 
         HotkeyText.Text = model.Hotkey;
         HotkeyChip.Visibility = model.Expanded || model.Listening || writing ? Visibility.Collapsed : Visibility.Visible;
@@ -341,6 +389,7 @@ internal partial class BarWindow : Window
         wasExpanded = show;
         Tray.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         Card.CornerRadius = Shadow.CornerRadius = new CornerRadius(show ? 20 : 22);
+        Glow.CornerRadius = show ? 20 : 22;
         if (!show || model.Decision is not { } decision) return;
 
         Meters.Children.Clear();

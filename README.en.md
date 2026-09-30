@@ -91,7 +91,12 @@ Tray → **Configurações…** (saved to `%APPDATA%\QuickVoice\config.json`):
 - **Listen shortcut:** Alt+Space, Ctrl+Alt+Space or Ctrl+Shift+Space.
 - **Wake word:** always listening, acting only on sentences that start with "QuickVoice"
   ("QuickVoice, open chrome"). You choose the name and its variations.
-- **Bar look:** dark or light theme, accent color (yellow, blue, green, pink) and size.
+- **Bar look:** dark or light theme, accent color (yellow, blue, green, pink), size and the **voice glow**: while you
+  speak a colored light rises from the pill's bottom edge and pulses with your voice, then becomes a beam sweeping
+  back and forth while commands run (adapted from Libraries.dev's voice-glow, with elastic springs). Dragging the pill
+  makes it lean with your hand's speed, like React Bits' Shredder.
+- **History:** a paper shredder (React Bits' Shredder): drag a command into the slit and it is cut into strips and
+  deleted; double-click to repeat; "Triturar tudo" clears it.
 - **Updates:** checks GitHub for a newer release at startup; tray → **Atualizar** downloads the release
   installer, installs it silently and reopens the app (the portable build opens the release page instead).
 

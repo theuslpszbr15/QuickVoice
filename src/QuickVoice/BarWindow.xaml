@@ -46,7 +46,7 @@
     </Window.Resources>
 
     <!-- Room around the pill for its shadow and for the sway while it is dragged. -->
-    <Grid x:Name="Root" Margin="24,20,24,36" Width="520" RenderTransformOrigin="0.5,0.5">
+    <Grid x:Name="Root" Margin="24,30,24,40" Width="520" RenderTransformOrigin="0.5,0.5">
         <Grid.RenderTransform>
             <TransformGroup>
                 <ScaleTransform x:Name="Lift"/>

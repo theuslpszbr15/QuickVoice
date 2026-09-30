@@ -29,6 +29,19 @@ internal static class Win32
     [DllImport("user32.dll")] public static extern bool PostMessage(nint hwnd, uint message, nint wParam, nint lParam);
     public const uint WM_CLOSE = 0x0010;
     [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] private static extern bool GetCursorPos(out POINT point);
+    [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int key);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT
+    {
+        public int X, Y;
+    }
+
+    /// <summary>The cursor in screen pixels.</summary>
+    public static (int X, int Y) Cursor() => GetCursorPos(out var p) ? (p.X, p.Y) : (0, 0);
+
+    public static bool LeftButtonDown => (GetAsyncKeyState(0x01) & 0x8000) != 0;
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(nint hwnd, StringBuilder text, int max);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(nint hwnd, StringBuilder name, int max);
     [DllImport("dwmapi.dll")] private static extern int DwmGetWindowAttribute(nint hwnd, int attribute, out int value, int size);

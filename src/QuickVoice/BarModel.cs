@@ -18,6 +18,8 @@ internal sealed class BarModel
     /// <summary>A command just fired: the chip turns yellow until the next answer.</summary>
     public bool Flash { get; private set; }
     public bool Paused { get => paused; set => Set(ref paused, value); }
+    /// <summary>Commands are running: the glow gathers into a sweeping beam.</summary>
+    public bool Processing { get => processing; set => Set(ref processing, value); }
     /// <summary>Something the person must fix (permissions, key). Shown while the bar is idle.</summary>
     public string? Notice { get => notice; set => Set(ref notice, value); }
     public string Hotkey { get => hotkey; set => Set(ref hotkey, value); }
@@ -28,7 +30,7 @@ internal sealed class BarModel
     /// <summary>Set by the app: a command typed in write mode.</summary>
     public Action<string> Submit { get; set; } = _ => { };
 
-    private bool listening, paused;
+    private bool listening, paused, processing;
     private string? notice;
     private string hotkey = "Alt+Espaço";
     private string writeHotkey = "Alt+Shift+Espaço";

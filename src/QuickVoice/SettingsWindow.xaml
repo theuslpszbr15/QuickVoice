@@ -83,6 +83,20 @@
                 <ComboBoxItem Tag="large" Content="Grande"/>
             </ComboBox>
         </Grid>
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBlock Text="Brilho da voz:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <ComboBox x:Name="GlowBox" Width="200" Height="28">
+                <ComboBoxItem Tag="colorful" Content="Colorido"/>
+                <ComboBoxItem Tag="ocean" Content="Oceano"/>
+                <ComboBoxItem Tag="sunset" Content="Pôr do sol"/>
+                <ComboBoxItem Tag="forest" Content="Floresta"/>
+                <ComboBoxItem Tag="candy" Content="Doce"/>
+                <ComboBoxItem Tag="ice" Content="Gelo"/>
+                <ComboBoxItem Tag="gold" Content="Dourado"/>
+                <ComboBoxItem Tag="mono" Content="Mono"/>
+                <ComboBoxItem Tag="off" Content="Desligado"/>
+            </ComboBox>
+        </StackPanel>
 
         <TextBlock Text="Atualizações" Style="{StaticResource Heading}"/>
         <CheckBox x:Name="UpdatesCheck" Content="Procurar uma versão nova no GitHub ao iniciar"/>

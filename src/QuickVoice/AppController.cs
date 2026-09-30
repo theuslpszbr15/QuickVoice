@@ -19,12 +19,14 @@ internal sealed class AppController(Session session, BarModel model, Options opt
     private bool listening;
     private bool busy;
     private readonly History history = new();
+    private readonly MicMeter meter = new();
     private Forms.ToolStripMenuItem? updateItem;
     private Updater.Release? update;
 
     public void Start()
     {
         bar = new BarWindow(model, settings);
+        bar.Glow.Source = meter.Read;
         bar.Show();
         session.History = history;
         model.Toggle = Toggle;
@@ -48,6 +50,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         }
         if (settings.CheckUpdates) _ = CheckForUpdateAsync(quiet: true);
         if (options.Agent) bar.Dispatcher.InvokeAsync(OpenAgent, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        if (options.History) bar.Dispatcher.InvokeAsync(ShowHistory, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
     private void ShowHistory() => new HistoryWindow(history, session.Submit).Show();
@@ -159,6 +162,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         }
         listening = true;
         model.Listening = true;
+        if (settings.VoiceGlow != "off") meter.Start();
         model.Notice = session.WakePhrases.Count > 0 ? $"Sempre ouvindo: comece com “{session.WakePhrases[0]}”, ex. “{session.WakePhrases[0]}, abre o chrome”." : null;
         ShowState();
         log?.Write("listening", new() { ["language"] = listener.Language });
@@ -169,6 +173,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
     {
         listening = false;  // before the session ends the utterance, so it does not restart the recognizer
         model.Listening = false;
+        meter.Stop();
         if (listener is not null) await listener.StopAsync();
         session.Stop();
         log?.Write("stopped");
@@ -198,6 +203,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
     {
         hotkey?.Dispose();
         writeHotkey?.Dispose();
+        meter.Dispose();
         (listener as IDisposable)?.Dispose();
         if (tray is not null)
         {

@@ -219,7 +219,26 @@ internal sealed class Session
     }
 
     /// <summary>One at a time: Ctrl+N must not beat Notepad to the front.</summary>
-    private async Task RunAfter(Task previous, Command command, int utterance)
+    private Task RunAfter(Task previous, Command command, int utterance)
+    {
+        running++;
+        if (Bar is not null) Bar.Processing = true;
+        var run = RunOne(previous, command, utterance);
+        _ = EndProcessingAsync(run, command);
+        return run;
+    }
+
+    private int running;
+
+    /// <summary>The sweep lingers a moment so it reads as "done"; longer for the agent, which keeps working elsewhere.</summary>
+    private async Task EndProcessingAsync(Task run, Command command)
+    {
+        await run;
+        await Task.Delay(command is Command.AgentTask ? 2500 : 700);
+        if (--running == 0 && Bar is not null) Bar.Processing = false;
+    }
+
+    private async Task RunOne(Task previous, Command command, int utterance)
     {
         await previous;
         var failure = await executor.RunAsync(command);

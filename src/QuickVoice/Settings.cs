@@ -22,6 +22,8 @@ internal sealed class Settings
     public string Accent { get; set; } = "yellow";
     /// <summary>"small", "normal" or "large".</summary>
     public string BarSize { get; set; } = "normal";
+    /// <summary>The glow that reacts to the voice: a voice-glow color variant ("colorful", "ocean"…) or "off".</summary>
+    public string VoiceGlow { get; set; } = "colorful";
     /// <summary>Asks GitHub for a newer release when the app starts.</summary>
     public bool CheckUpdates { get; set; } = true;
 

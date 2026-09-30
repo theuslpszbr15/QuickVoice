@@ -26,6 +26,7 @@ internal partial class SettingsWindow : Window
         Select(ThemeBox, settings.Theme);
         Select(AccentBox, settings.Accent);
         Select(SizeBox, settings.BarSize);
+        Select(GlowBox, settings.VoiceGlow);
         UpdatesCheck.IsChecked = settings.CheckUpdates;
         Loaded += (_, _) => Activate();
     }
@@ -42,6 +43,7 @@ internal partial class SettingsWindow : Window
         settings.Theme = TagOf(ThemeBox) ?? "dark";
         settings.Accent = TagOf(AccentBox) ?? "yellow";
         settings.BarSize = TagOf(SizeBox) ?? "normal";
+        settings.VoiceGlow = TagOf(GlowBox) ?? "colorful";
         settings.CheckUpdates = UpdatesCheck.IsChecked == true;
         DialogResult = true;
     }

@@ -93,7 +93,12 @@ Bandeja → **Configurações…** (salvas em `%APPDATA%\QuickVoice\config.json`
 - **Atalho para ouvir:** Alt+Espaço, Ctrl+Alt+Espaço ou Ctrl+Shift+Espaço.
 - **Palavra de ativação:** sempre ouvindo, age só quando a frase começa com "QuickVoice"
   ("QuickVoice, abre o chrome"). Você escolhe o nome e as variações.
-- **Aparência da barra:** tema escuro ou claro, cor de destaque (amarelo, azul, verde, rosa) e tamanho.
+- **Aparência da barra:** tema escuro ou claro, cor de destaque (amarelo, azul, verde, rosa), tamanho e o
+  **brilho da voz**: enquanto você fala, uma luz colorida sobe da borda de baixo da pílula e pulsa com a sua voz, e
+  vira um feixe que vai e volta enquanto os comandos rodam (adaptado do voice-glow do Libraries.dev, com molas
+  elásticas). Arrastar a pílula a faz inclinar com a velocidade da mão, como a fragmentadora do React Bits.
+- **Histórico:** uma fragmentadora de papel (Shredder, do React Bits): arraste um comando até a fenda e ele é cortado
+  em tiras e apagado; clique duas vezes para repetir; "Triturar tudo" limpa.
 - **Atualizações:** ao iniciar, procura uma versão nova no GitHub. Bandeja → **Atualizar** baixa o
   instalador da release, instala em silêncio e reabre o app (na versão portátil, abre a página da release).
 
