@@ -47,6 +47,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
             Toggle();  // always listening, waiting for its name
         }
         if (settings.CheckUpdates) _ = CheckForUpdateAsync(quiet: true);
+        if (options.Agent) bar.Dispatcher.InvokeAsync(OpenAgent, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
     private void ShowHistory() => new HistoryWindow(history, session.Submit).Show();
@@ -207,9 +208,12 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         System.Windows.Application.Current.Shutdown();
     }
 
+    /// <summary>Model, plugins and where the agent runs; read again by each task, so no restart.</summary>
+    private void OpenAgent() => new AgentWindow(settings).ShowDialog();
+
     private void OpenSettings()
     {
-        var dialog = new SettingsWindow(settings, PromptForKey);
+        var dialog = new SettingsWindow(settings, PromptForKey, OpenAgent);
         if (dialog.ShowDialog() != true) return;
         try
         {
@@ -246,6 +250,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         menu.Items.Add(new Forms.ToolStripMenuItem($"Escrever um comando ({model.WriteHotkey})", null, (_, _) => bar?.BeginWrite()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Mostrar a barra", null, (_, _) => bar?.Show()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Configurações…", null, (_, _) => OpenSettings()));
+        menu.Items.Add(new Forms.ToolStripMenuItem("Agente Copilot…", null, (_, _) => OpenAgent()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Editar meus atalhos…", null, (_, _) => OpenShortcuts()));
         menu.Items.Add(new Forms.ToolStripMenuItem("Histórico…", null, (_, _) => ShowHistory()));
         updateItem = new Forms.ToolStripMenuItem("Procurar atualizações", null, (_, _) => OnUpdate());

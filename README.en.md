@@ -45,6 +45,7 @@ The local rules understand Portuguese and English.
 | "what is 15 percent of 320", "what time is it in Tokyo", "que dia é hoje" | answers on the bar (math is copied to the clipboard) |
 | "undo" | closes the window QuickVoice just opened, else Ctrl+Z |
 | "do it again", "repete" | runs the last sentence's commands again |
+| "Copilot, summarize yesterday's report", "develop a todo list app", "build a todo app" | hands the task to the **GitHub Copilot agent** (see below) |
 | your phrases | your own shortcuts and routines (see below) |
 
 Chain them in one breath: "open terminal and type dir", "open spotify and volume up". If the app is
@@ -93,6 +94,21 @@ Tray → **Configurações…** (saved to `%APPDATA%\QuickVoice\config.json`):
 - **Bar look:** dark or light theme, accent color (yellow, blue, green, pink) and size.
 - **Updates:** checks GitHub for a newer release at startup; tray → **Atualizar** downloads the release
   installer, installs it silently and reopens the app (the portable build opens the release page instead).
+
+### Copilot agent
+
+Tray → **Agente Copilot…** (or `QuickVoice.exe --agent`). Say "Copilot, …" or ask for software ("develop a
+complete todo list") and QuickVoice hands the task to **GitHub Copilot**, signed in with your account:
+
+- **Where:** the [Copilot CLI](https://github.com/github/copilot-cli) in its own terminal (the screen installs it and
+  signs in) or the VS Code chat in agent mode.
+- **Model:** listed fastest to slowest, with "Testar o modelo escolhido" (not every model is enabled on every
+  account; "Automático" always works).
+- **MCP plugins:** Playwright (browser), files, fetch or any server of yours (command or URL).
+- Each task gets a folder under `%USERPROFILE%\QuickVoice Projetos`, with instructions to deliver a complete
+  project, opened in VS Code so you watch the files appear.
+- By default the agent asks before editing files or running commands; "modo autônomo" turns that off. What you
+  said reaches the agent as text, never through a shell.
 
 ### Your own shortcuts
 

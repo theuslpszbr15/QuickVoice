@@ -106,7 +106,7 @@ public sealed class Engine
     {
         var namesBrowser = d.App is { } app && Browsers.Contains(app);
         ActionKind[][] local = [[ActionKind.Control], [ActionKind.Click], [ActionKind.Shortcut], [ActionKind.CloseApp],
-                                [ActionKind.OpenFolder], [ActionKind.OpenRecent], [ActionKind.Answer]];
+                                [ActionKind.OpenFolder], [ActionKind.OpenRecent], [ActionKind.Answer], [ActionKind.Agent]];
         return namesBrowser
             ? [[ActionKind.OpenUrl, ActionKind.WebSearch, ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText], .. local]
             : [[ActionKind.OpenUrl, ActionKind.WebSearch], [ActionKind.OpenApp], [ActionKind.NewItem], [ActionKind.TypeText], .. local];
@@ -158,6 +158,7 @@ public sealed class Engine
         ActionKind.OpenFolder => d.Detail is { } folder ? new Command.OpenFolder(folder) : null,
         ActionKind.OpenRecent => d.Detail is { } kind ? new Command.OpenRecent(kind) : null,
         ActionKind.Answer => d.Detail?.Split(':', 2) is [var answerKind, var value] ? new Command.Answer(d.Argument ?? "", answerKind, value) : null,
+        ActionKind.Agent => d.Argument is { Length: > 0 } task ? new Command.AgentTask(task) : null,
         _ => null,
     };
 

@@ -22,6 +22,8 @@ public abstract record Command
     public sealed record OpenRecent(string Kind) : Command;
     /// <summary>A quick answer shown on the bar: "math" (value computed here), "time" (a time zone id) or "date".</summary>
     public sealed record Answer(string Question, string Kind, string Value) : Command;
+    /// <summary>A task handed to the Copilot agent: "copilot, resume meus e-mails", "desenvolve uma todo list".</summary>
+    public sealed record AgentTask(string Task) : Command;
 
     public sealed override string ToString() => this switch
     {
@@ -37,6 +39,7 @@ public abstract record Command
         OpenFolder c => $"abrir a pasta {c.Folder}",
         OpenRecent c => $"abrir o último {Recent.Describe(c.Kind)}",
         Answer c => c.Kind == "math" ? $"{c.Question} = {c.Value}" : c.Question,
+        AgentTask c => $"Copilot: “{c.Task}”",
         _ => GetType().Name,
     };
 

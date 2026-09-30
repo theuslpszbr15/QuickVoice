@@ -149,6 +149,28 @@ public class MoreCommandsTests
         Assert.Equal("Em Tóquio são 21:00", QuickAnswers.Speak(new Command.Answer("", "time", "Tokyo Standard Time|Tóquio"), noonUtc));
     }
 
+    [Theory]
+    [InlineData("copilot, resume o relatório de ontem", "resume o relatório de ontem")]
+    [InlineData("ei copilot abre o site da GM e me diz as notícias", "abre o site da GM e me diz as notícias")]
+    [InlineData("desenvolva uma ToDoList completa", "desenvolva uma ToDoList completa")]
+    [InlineData("cria um app de tarefas com login", "cria um app de tarefas com login")]
+    [InlineData("build a todo app", "build a todo app")]
+    public void HandsTasksToTheAgent(string sentence, string task) =>
+        Assert.Equal([new Command.AgentTask(task)], Say(sentence, typed: true));
+
+    [Fact]
+    public void OpensVsCodeThenHandsTheTaskToTheAgent()
+    {
+        var fired = Say("abre o chrome e desenvolva uma ToDoList", typed: true);
+        Assert.Equal([new Command.OpenApp("Google Chrome"), new Command.AgentTask("desenvolva uma ToDoList")], fired);
+    }
+
+    [Theory]
+    [InlineData("cria uma nota nova")]
+    [InlineData("faz de novo")]
+    public void EverydayCreateAndRepeatAreNotAgentTasks(string sentence) =>
+        Assert.DoesNotContain(Say(sentence, typed: true), c => c is Command.AgentTask);
+
     [Fact]
     public void ArithmeticFormatsTheBrazilianWay()
     {

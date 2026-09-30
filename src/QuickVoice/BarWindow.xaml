@@ -1,7 +1,7 @@
 <Window x:Class="QuickVoice.BarWindow" x:ClassModifier="internal"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="QuickVoice" Width="568" SizeToContent="Height"
+        Title="QuickVoice" SizeToContent="WidthAndHeight"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize"
         FontFamily="Segoe UI Variable Text, Segoe UI" Foreground="White"
@@ -45,7 +45,15 @@
         </Style>
     </Window.Resources>
 
-    <Grid x:Name="Root" Margin="24,8,24,32" Width="520">
+    <!-- Room around the pill for its shadow and for the sway while it is dragged. -->
+    <Grid x:Name="Root" Margin="24,20,24,36" Width="520" RenderTransformOrigin="0.5,0.5">
+        <Grid.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform x:Name="Lift"/>
+                <RotateTransform x:Name="Tilt"/>
+                <TranslateTransform x:Name="Slide"/>
+            </TransformGroup>
+        </Grid.RenderTransform>
         <!-- Shadow on its own layer so the text above stays crisp. -->
         <Border x:Name="Shadow" CornerRadius="22" Background="{DynamicResource Panel}">
             <Border.Effect>
@@ -55,7 +63,7 @@
         <Border x:Name="Card" CornerRadius="22" Background="Transparent" BorderBrush="{DynamicResource Ink08}" BorderThickness="1"
                 MouseLeftButtonDown="OnDrag">
             <StackPanel>
-                <Grid Height="44" Margin="8,0,7,0">
+                <Grid Height="44" Margin="8,0,10,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -95,7 +103,11 @@
                         <Border x:Name="HotkeyChip" CornerRadius="11" Height="22" Padding="8,0" Background="{DynamicResource Ink08}" Margin="0,0,4,0">
                             <TextBlock x:Name="HotkeyText" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Ink50}" VerticalAlignment="Center"/>
                         </Border>
-                        <Border x:Name="FireChip" CornerRadius="15" Height="30" Padding="12,0" Background="{DynamicResource Fire}" Visibility="Collapsed">
+                        <Border x:Name="FireChip" CornerRadius="15" Height="30" Padding="12,0" Background="{DynamicResource Fire}" Visibility="Collapsed"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="FireScale"/>
+                            </Border.RenderTransform>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" Text="&#xE945;" FontSize="12" Foreground="{DynamicResource FireInk}"
                                            VerticalAlignment="Center" Margin="0,0,6,0"/>

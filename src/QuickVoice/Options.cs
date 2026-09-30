@@ -14,6 +14,7 @@ internal sealed class Options
           --log         guarda um rastro local em %LOCALAPPDATA%\QuickVoice\Logs (tudo o que o microfone ouvir)
           --locale      idioma da fala, ex. en-US (padrão: o idioma de fala do Windows)
           --wpm         ritmo para --text, em palavras por minuto
+          --agent       abre a tela do Agente Copilot junto com a barra
         """;
 
     public string? Text { get; private set; }
@@ -25,6 +26,7 @@ internal sealed class Options
     public bool Help { get; private set; }
     /// <summary>Started by the app itself after a settings change: wait for the old instance to exit.</summary>
     public bool Restarted { get; private set; }
+    public bool Agent { get; private set; }
 
     public static Options Parse(string[] args)
     {
@@ -39,6 +41,7 @@ internal sealed class Options
                 case "--log": options.Log = true; break;
                 case "--help" or "-h": options.Help = true; break;
                 case "--restarted": options.Restarted = true; break;
+                case "--agent": options.Agent = true; break;
                 case "--text": options.Text = Value(flag, queue); break;
                 case "--locale": options.Locale = Value(flag, queue); break;
                 case "--wpm":

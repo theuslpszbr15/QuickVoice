@@ -106,6 +106,8 @@ public sealed class LocalDecider : IDecider
         {
             if (ShortcutAt(norm, i) is { } shortcut)
                 return Act(ActionKind.Shortcut, 0.95, argument: Join(words, Enumerable.Range(i, shortcut.Length)), detail: shortcut.Name);
+            if (AgentTaskAt(norm, i) is { } taskStart)
+                return Act(ActionKind.Agent, 0.95, argument: Join(words, Enumerable.Range(taskStart, norm.Length - taskStart)));
             if (QuickAnswers.Match(raw, norm, i) is { } answer)
                 return Act(ActionKind.Answer, 0.95, argument: answer.Question, detail: $"{answer.Kind}:{answer.Value}");
             var clauseEnd = ClauseEnd(norm, i);
@@ -197,11 +199,39 @@ public sealed class LocalDecider : IDecider
 
     private bool StartsCommand(string[] norm, int i) =>
         IsVerb(norm[i]) || ClickVerbs.Contains(norm[i]) || CloseVerbs.Contains(norm[i]) || ShortcutAt(norm, i) is not null
+        || AgentTaskAt(norm, i) is not null
         || (Controls.Starters.Contains(norm[i]) && Controls.Match(norm, i, norm.Length) is not null)
         || SnapAt(norm, i, norm.Length) is not null;
 
+    private static readonly HashSet<string> AgentNames = ["copilot", "agente", "agent"];
+    private static readonly HashSet<string> DevelopVerbs =
+        ["desenvolve", "desenvolva", "desenvolver", "implementa", "implemente", "implementar", "programe", "programar", "develop", "implement"];
+    private static readonly HashSet<string> MakeVerbs =
+        ["cria", "criar", "crie", "faz", "faca", "fazer", "monta", "monte", "create", "make", "build"];
+    private static readonly HashSet<string> BuildNouns =
+        ["app", "aplicativo", "aplicacao", "site", "sistema", "jogo", "programa", "script", "api", "software", "projeto", "dashboard",
+         "game", "website", "todolist", "todo", "calculadora"];
+
     /// <summary>
-    /// "chrome na esquerda", "coloca o bloco de notas na direita", "manda o teams pro outro monitor": an app named
+    /// Where a task for the Copilot agent starts: after "copilot," ("copilot, resume o relatório"), or at a verb that
+    /// asks for software ("desenvolve uma todo list", "cria um app de tarefas"). The task runs to the end of the sentence.
+    /// </summary>
+    private static int? AgentTaskAt(string[] norm, int i)
+    {
+        var at = i;
+        if (norm[at] is "ei" or "hey" or "ok" or "oi" && at + 1 < norm.Length) at++;
+        if (AgentNames.Contains(norm[at]))
+        {
+            var start = at + 1;
+            while (start < norm.Length && norm[start] is "por" or "favor" or "please") start++;
+            return start < norm.Length ? start : null;
+        }
+        if (DevelopVerbs.Contains(norm[i]) && i + 1 < norm.Length) return i;
+        if (MakeVerbs.Contains(norm[i]) && norm.Skip(i + 1).Take(4).Any(BuildNouns.Contains)) return i;
+        return null;
+    }
+
+    /// <summary>, "manda o teams pro outro monitor": an app named
     /// right before where its window goes. Without an app the generic controls handle it ("joga isso na esquerda").
     /// </summary>
     private (string App, SystemAction Action, int End)? SnapAt(string[] norm, int start, int clauseEnd)

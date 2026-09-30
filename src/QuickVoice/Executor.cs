@@ -62,6 +62,9 @@ internal sealed class Executor(InstalledApps apps, Shortcuts shortcuts, bool dry
                     break;
                 case Command.Answer:
                     break;
+                case Command.AgentTask agent:
+                    await Agent.StartAsync(agent.Task, Settings.Load());  // read now: the agent screen may have changed it
+                    break;
                 case Command.Click click:
                     await Clicker.ClickAsync(Foreground.Window, click.Target);
                     break;

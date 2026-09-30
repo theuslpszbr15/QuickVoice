@@ -25,6 +25,18 @@ internal sealed class Settings
     /// <summary>Asks GitHub for a newer release when the app starts.</summary>
     public bool CheckUpdates { get; set; } = true;
 
+    /// <summary>Where "copilot, …" tasks run: "copilot-cli" (a terminal, any model) or "vscode" (the Copilot chat in agent mode).</summary>
+    public string AgentHarness { get; set; } = "copilot-cli";
+    /// <summary>A Copilot CLI model id, or "auto".</summary>
+    public string AgentModel { get; set; } = "auto";
+    /// <summary>Runs tools without asking (--allow-all-tools). Off: every file edit or command waits for a yes.</summary>
+    public bool AgentAutonomous { get; set; }
+    /// <summary>With the Copilot CLI, also opens the project folder in VS Code to watch the files appear.</summary>
+    public bool AgentOpensVsCode { get; set; } = true;
+    public string AgentFolder { get; set; } = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "QuickVoice Projetos");
+    /// <summary>MCP servers (plugins) the agent may use.</summary>
+    public List<McpServer> McpServers { get; set; } = [McpServer.Playwright()];
+
     public static string FilePath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "QuickVoice", "config.json");
 
     private static readonly JsonSerializerOptions Json = new() { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase };

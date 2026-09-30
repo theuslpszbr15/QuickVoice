@@ -225,6 +225,11 @@ internal sealed class Session
         var failure = await executor.RunAsync(command);
         log?.Write("run", new() { ["utterance"] = utterance, ["command"] = command.ToString(), ["ok"] = failure is null, ["error"] = failure });
         if (failure is not null && Bar is not null) Bar.Notice = failure;
+        if (failure is null && command is Command.AgentTask agent && Bar is not null)
+        {
+            Bar.Notice = $"Copilot recebeu: “{agent.Task}”. Acompanhe no terminal ou no VS Code.";
+            answerShown = true;
+        }
         if (failure is null && command is Command.Answer answer)
         {
             var text = QuickAnswers.Speak(answer, DateTime.UtcNow);

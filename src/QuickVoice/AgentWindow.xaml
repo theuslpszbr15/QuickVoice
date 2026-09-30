@@ -1,0 +1,196 @@
+<Window x:Class="QuickVoice.AgentWindow" x:ClassModifier="internal"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="QuickVoice — Agente Copilot" Width="660" Height="820" MinHeight="520"
+        WindowStartupLocation="CenterScreen" Topmost="True"
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Background="#F4F6FA">
+    <Window.Resources>
+        <SolidColorBrush x:Key="Accent" Color="#0A62D0"/>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="18,14"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="BorderBrush" Value="#E3E7EE"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style x:Key="Heading" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#5F6368"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,2,0,8"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource Accent}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Accent}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel x:Name="Page">
+        <!-- Header -->
+        <Border DockPanel.Dock="Top" Padding="24,18,24,16">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#0B3D91" Offset="0"/>
+                    <GradientStop Color="#0A84FF" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <StackPanel>
+                <TextBlock Text="Agente Copilot" FontSize="22" FontWeight="SemiBold" Foreground="White"/>
+                <TextBlock Foreground="#DCEBFF" TextWrapping="Wrap" Margin="0,4,0,0"
+                           Text="Diga “Copilot, …” ou “desenvolve …” e o GitHub Copilot faz a tarefa com a sua conta, usando o modelo e os plugins escolhidos aqui."/>
+            </StackPanel>
+        </Border>
+
+        <!-- Footer -->
+        <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="#E3E7EE" BorderThickness="0,1,0,0" Padding="24,12">
+            <DockPanel>
+                <TextBlock x:Name="SavedText" VerticalAlignment="Center" Foreground="#5F6368"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancelar" IsCancel="True" Width="96"/>
+                    <Button Content="Salvar" IsDefault="True" Width="96" Margin="0" Style="{StaticResource Primary}" Click="OnSave"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="Cards" Margin="20,16,20,8">
+
+                <!-- Copilot account -->
+                <Border Style="{StaticResource Card}">
+                    <DockPanel>
+                        <Ellipse x:Name="StatusDot" Width="10" Height="10" Fill="#C7CCD4" Margin="0,5,10,0" VerticalAlignment="Top"/>
+                        <StackPanel>
+                            <TextBlock x:Name="StatusTitle" Text="Procurando o Copilot CLI…" Style="{StaticResource Heading}"/>
+                            <TextBlock x:Name="StatusHint" Style="{StaticResource Hint}"
+                                       Text="O Copilot CLI roda as tarefas num terminal, com a sua assinatura do GitHub Copilot."/>
+                            <WrapPanel>
+                                <Button x:Name="InstallButton" Content="Instalar Copilot CLI" Click="OnInstall"/>
+                                <Button x:Name="LoginButton" Content="Entrar na conta GitHub" Click="OnLogin"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- Where -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Onde executar" Style="{StaticResource Heading}"/>
+                        <RadioButton x:Name="CliRadio" GroupName="harness" Margin="0,6,0,0">
+                            <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold" Text="Copilot CLI"/><Run Foreground="#5F6368" Text="  · terminal próprio, usa o modelo escolhido abaixo"/></TextBlock>
+                        </RadioButton>
+                        <RadioButton x:Name="CodeRadio" GroupName="harness" Margin="0,8,0,0">
+                            <TextBlock TextWrapping="Wrap"><Run FontWeight="SemiBold" Text="VS Code"/><Run Foreground="#5F6368" Text="  · chat do Copilot no modo agente (o modelo é o do seletor do chat)"/></TextBlock>
+                        </RadioButton>
+                    </StackPanel>
+                </Border>
+
+                <!-- Model -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel>
+                            <TextBlock Text="Modelo" Style="{StaticResource Heading}"/>
+                            <TextBlock x:Name="ModelsState" HorizontalAlignment="Right" Foreground="#5F6368" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBlock Style="{StaticResource Hint}" Text="Do mais rápido ao mais lento. Os rápidos respondem na hora; os lentos pensam mais e acertam tarefas grandes. Nem todo modelo é liberado em toda conta: teste antes."/>
+                        <ListBox x:Name="ModelList" Height="230" BorderBrush="#E3E7EE" HorizontalContentAlignment="Stretch"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="4,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,10,0" VerticalAlignment="Center"
+                                                    Tag="{Binding Speed}" Loaded="OnSpeedBars"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding SpeedLabel}" Foreground="#5F6368" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <DockPanel Margin="0,8,0,0">
+                            <Button x:Name="CheckButton" Content="Testar o modelo escolhido" Click="OnCheckModel"/>
+                            <TextBlock x:Name="CheckState" VerticalAlignment="Center" Foreground="#5F6368" TextWrapping="Wrap"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- MCP -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Plugins (MCP)" Style="{StaticResource Heading}"/>
+                        <TextBlock Style="{StaticResource Hint}"
+                                   Text="Ferramentas extras que o agente pode usar. O Playwright controla um navegador; comandos locais rodam no seu PC, URLs são servidores remotos. O GitHub já vem incluído no Copilot CLI."/>
+                        <DataGrid x:Name="McpGrid" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column"
+                                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEF1F5" BorderBrush="#E3E7EE"
+                                  RowHeight="30" MinHeight="90" MaxHeight="200" SelectionMode="Single" Background="White">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Ativo" Width="52">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <CheckBox IsChecked="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="110"/>
+                                <DataGridTextColumn Header="Comando ou URL" Binding="{Binding Command}" Width="140"/>
+                                <DataGridTextColumn Header="Argumentos" Binding="{Binding Args}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <WrapPanel Margin="0,10,0,0">
+                            <Button Content="+ Playwright (navegador)" Click="OnAddPlaywright" Margin="0,0,8,6"/>
+                            <Button Content="+ Arquivos do PC" Click="OnAddFiles" Margin="0,0,8,6"/>
+                            <Button Content="+ Ler páginas (fetch)" Click="OnAddFetch" Margin="0,0,8,6"/>
+                            <Button Content="+ Personalizado" Click="OnAddCustom" Margin="0,0,8,6"/>
+                            <Button Content="Remover" Click="OnRemove" Margin="0,0,8,6"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Execution -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Execução" Style="{StaticResource Heading}"/>
+                        <CheckBox x:Name="OpenCodeCheck" Margin="0,6,0,0" Content="Abrir a pasta do projeto no VS Code enquanto o agente trabalha"/>
+                        <CheckBox x:Name="AutonomousCheck" Margin="0,8,0,0">
+                            <TextBlock TextWrapping="Wrap"><Run Text="Modo autônomo: executa sem pedir confirmação"/><Run Foreground="#B3261E" Text="  (só em pastas de teste)"/></TextBlock>
+                        </CheckBox>
+                        <TextBlock Text="Pasta dos projetos" Margin="0,12,0,4"/>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Escolher…" Margin="8,0,0,0" Click="OnPickFolder"/>
+                            <TextBox x:Name="FolderBox" Height="28" Padding="4,4"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Try it -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Testar agora" Style="{StaticResource Heading}"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="Igual a dizer “Copilot, …”. Salva as escolhas acima e começa a tarefa."/>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="Executar" Margin="8,0,0,0" Style="{StaticResource Primary}" Click="OnRun"/>
+                            <TextBox x:Name="TaskBox" Height="28" Padding="4,4"
+                                     Text="desenvolva uma ToDoList completa em HTML, CSS e JavaScript, com tarefas salvas no navegador"/>
+                        </DockPanel>
+                        <TextBlock x:Name="RunState" Style="{StaticResource Hint}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

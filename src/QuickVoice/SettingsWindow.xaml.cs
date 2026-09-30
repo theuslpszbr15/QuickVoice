@@ -8,11 +8,13 @@ internal partial class SettingsWindow : Window
 {
     private readonly Settings settings;
     private readonly Action promptForKey;
+    private readonly Action openAgent;
 
-    public SettingsWindow(Settings settings, Action promptForKey)
+    public SettingsWindow(Settings settings, Action promptForKey, Action openAgent)
     {
         this.settings = settings;
         this.promptForKey = promptForKey;
+        this.openAgent = openAgent;
         InitializeComponent();
         Select(LocaleBox, settings.Locale ?? "");
         Select(ModelBox, settings.WhisperModel);
@@ -51,6 +53,8 @@ internal partial class SettingsWindow : Window
     }
 
     private void OnKey(object sender, RoutedEventArgs e) => promptForKey();
+
+    private void OnAgent(object sender, RoutedEventArgs e) => openAgent();
 
     private void OnLogs(object sender, RoutedEventArgs e)
     {

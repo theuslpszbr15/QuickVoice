@@ -89,6 +89,7 @@
 
         <TextBlock Text="Mais" Style="{StaticResource Heading}"/>
         <WrapPanel>
+            <Button Content="Agente Copilot…" Click="OnAgent"/>
             <Button Content="Editar meus atalhos…" Click="OnShortcuts"/>
             <Button Content="Chave do Jev…" Click="OnKey"/>
             <Button Content="Pasta de logs" Click="OnLogs"/>

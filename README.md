@@ -43,6 +43,7 @@ o System One da TypeSafe, para entender frases mais soltas.
 | "quanto é 15% de 320", "quanto é 12 vezes 8", "que horas são em Nova York", "que dia é hoje" | responde na própria barra (contas vão para a área de transferência) |
 | "desfaz isso" | fecha a janela que o QuickVoice acabou de abrir, senão Ctrl+Z |
 | "repete", "faz de novo" | refaz os comandos da última frase |
+| "Copilot, resume o relatório de ontem", "abre o vscode e desenvolve uma ToDoList", "cria um app de tarefas" | entrega a tarefa ao **agente GitHub Copilot** (veja abaixo) |
 | suas frases | seus atalhos e rotinas (veja abaixo) |
 
 Encadeie numa frase só: "abre o terminal e digita dir", "abre o spotify e aumenta o volume".
@@ -95,6 +96,21 @@ Bandeja → **Configurações…** (salvas em `%APPDATA%\QuickVoice\config.json`
 - **Aparência da barra:** tema escuro ou claro, cor de destaque (amarelo, azul, verde, rosa) e tamanho.
 - **Atualizações:** ao iniciar, procura uma versão nova no GitHub. Bandeja → **Atualizar** baixa o
   instalador da release, instala em silêncio e reabre o app (na versão portátil, abre a página da release).
+
+### Agente Copilot
+
+Bandeja → **Agente Copilot…** (ou `QuickVoice.exe --agent`). Diga "Copilot, …" ou peça um software
+("desenvolve uma ToDoList completa") e o QuickVoice entrega a tarefa ao **GitHub Copilot**, com a sua conta:
+
+- **Onde:** [Copilot CLI](https://github.com/github/copilot-cli) num terminal próprio (a tela instala e faz o login)
+  ou o chat do VS Code no modo agente.
+- **Modelo:** lista do mais rápido ao mais lento, com "Testar o modelo escolhido" (nem todo modelo é liberado
+  em toda conta; "Automático" sempre funciona).
+- **Plugins MCP:** Playwright (navegador), arquivos, fetch ou qualquer servidor seu (comando ou URL).
+- Cada tarefa ganha uma pasta em `%USERPROFILE%\QuickVoice Projetos`, com instruções para o agente entregar
+  um projeto completo, e abre no VS Code para você ver os arquivos aparecendo.
+- Por padrão o agente pede confirmação antes de editar arquivos ou rodar comandos; o "modo autônomo" desliga isso.
+  O que você falou vai para o agente como texto, nunca por um shell.
 
 ### Seus atalhos
 

@@ -49,10 +49,54 @@ internal partial class BarWindow : Window
         Loaded += (_, _) =>
         {
             var area = SystemParameters.WorkArea;
-            Left = area.Left + (area.Width - Width) / 2;
-            Top = area.Top;
+            Left = area.Left + (area.Width - ActualWidth) / 2;
+            Top = area.Top - 12;  // the pill sits where it always did; the extra margin is room to sway
+            lastLeft = Left;
             Render();
+            Enter();
         };
+        LocationChanged += (_, _) => Sway();
+    }
+
+    /// <summary>Drops in from above and fades in.</summary>
+    private void Enter()
+    {
+        var ease = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.35 };
+        Slide.BeginAnimation(TranslateTransform.YProperty, new DoubleAnimation(-28, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = ease });
+        Root.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(320)));
+    }
+
+    // Sway: dragging pushes the pill's angle, a damped spring brings it back level.
+    private const double MaxTilt = 4, Stiffness = 170, Damping = 11;
+    private double tilt, tiltSpeed, lastLeft;
+    private TimeSpan lastFrame;
+    private bool swinging;
+
+    private void Sway()
+    {
+        var dx = Left - lastLeft;
+        lastLeft = Left;
+        if (Math.Abs(dx) < 0.5) return;
+        tiltSpeed = Math.Clamp(tiltSpeed - dx * 5, -160, 160);  // the leading end lifts, like something carried
+        if (swinging) return;
+        swinging = true;
+        lastFrame = TimeSpan.Zero;
+        CompositionTarget.Rendering += SwingFrame;
+    }
+
+    private void SwingFrame(object? sender, EventArgs e)
+    {
+        var now = ((RenderingEventArgs)e).RenderingTime;
+        var dt = lastFrame == TimeSpan.Zero ? 1 / 60.0 : Math.Min((now - lastFrame).TotalSeconds, 1 / 30.0);
+        lastFrame = now;
+        if (dt <= 0) return;
+        tiltSpeed += (-Stiffness * tilt - Damping * tiltSpeed) * dt;
+        tilt = Math.Clamp(tilt + tiltSpeed * dt, -MaxTilt, MaxTilt);
+        Tilt.Angle = tilt;
+        if (Math.Abs(tilt) > 0.02 || Math.Abs(tiltSpeed) > 0.1) return;
+        Tilt.Angle = tilt = tiltSpeed = 0;
+        swinging = false;
+        CompositionTarget.Rendering -= SwingFrame;
     }
 
     private SolidColorBrush Ink(byte alpha) => new(Color.FromArgb(alpha, ink.R, ink.G, ink.B));
@@ -81,7 +125,6 @@ internal partial class BarWindow : Window
         Foreground = Ink(0xFF);
         var scale = settings.BarSize switch { "small" => 0.85, "large" => 1.2, _ => 1.0 };
         Root.LayoutTransform = new ScaleTransform(scale, scale);
-        Width = 568 * scale;
     }
 
     protected override void OnSourceInitialized(EventArgs e)
@@ -152,7 +195,13 @@ internal partial class BarWindow : Window
 
     private void OnDrag(object sender, MouseButtonEventArgs e)
     {
-        if (e.ButtonState == MouseButtonState.Pressed) DragMove();
+        if (e.ButtonState != MouseButtonState.Pressed) return;
+        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        foreach (var property in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
+            Lift.BeginAnimation(property, new DoubleAnimation(1.03, TimeSpan.FromMilliseconds(140)) { EasingFunction = ease });
+        DragMove();  // returns when the button is released
+        foreach (var property in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
+            Lift.BeginAnimation(property, new DoubleAnimation(1, TimeSpan.FromMilliseconds(260)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } });
     }
 
     private void Render()
@@ -170,6 +219,7 @@ internal partial class BarWindow : Window
         WriteBox.Visibility = writing ? Visibility.Visible : Visibility.Collapsed;
         Line.Visibility = writing ? Visibility.Collapsed : Visibility.Visible;
         var flashing = model.Expanded && model.Flash && model.FiredCommands.Count > 0;
+        if (flashing && (FireChip.Visibility != Visibility.Visible || FireText.Text != model.FiredCommands[^1].Command)) Pop();
         FireChip.Visibility = flashing ? Visibility.Visible : Visibility.Collapsed;
         if (flashing) FireText.Text = model.FiredCommands[^1].Command;
         StateText.Visibility = model.Expanded && !flashing ? Visibility.Visible : Visibility.Collapsed;
@@ -178,6 +228,38 @@ internal partial class BarWindow : Window
         RenderLine();
         RenderTray();
     }
+
+    /// <summary>The chip of a command that just fired springs in.</summary>
+    private void Pop()
+    {
+        var ease = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.6 };
+        foreach (var property in new[] { ScaleTransform.ScaleXProperty, ScaleTransform.ScaleYProperty })
+            FireScale.BeginAnimation(property, new DoubleAnimation(0.6, 1, TimeSpan.FromMilliseconds(320)) { EasingFunction = ease });
+    }
+
+    // Typewriter: notices and fired commands are written out a few letters per frame.
+    private string typing = "";
+    private int typed;
+    private System.Windows.Threading.DispatcherTimer? typer;
+
+    private string Typed(string text)
+    {
+        if (text != typing)
+        {
+            typing = text;
+            typed = 0;
+            typer ??= new System.Windows.Threading.DispatcherTimer(TimeSpan.FromMilliseconds(16), System.Windows.Threading.DispatcherPriority.Render, (_, _) =>
+            {
+                typed = Math.Min(typing.Length, typed + Math.Max(1, typing.Length / 45));
+                if (typed >= typing.Length) typer!.Stop();
+                RenderLine();
+            }, Dispatcher);
+            typer.Start();
+        }
+        return typed >= typing.Length ? typing : typing[..typed];
+    }
+
+    private int wordsShown;
 
     private void RenderLine()
     {
@@ -189,31 +271,46 @@ internal partial class BarWindow : Window
         {
             Line.FontSize = 13;
             Line.TextWrapping = TextWrapping.Wrap;
-            Line.Inlines.Add(new Run(notice));
+            Line.Inlines.Add(new Run(Typed(notice)));
+            wordsShown = 0;
         }
         else if (!model.Expanded && model.FiredCommands.Count > 0)
         {
             var last = model.FiredCommands[^1];
             Line.FontSize = 14;
-            Line.Inlines.Add(new Run(last.Command) { Foreground = Fire, FontWeight = FontWeights.SemiBold });
-            if (last.Lead is { } lead) Line.Inlines.Add(new Run(" · " + lead) { Foreground = Muted });
+            var command = Typed(last.Command);
+            Line.Inlines.Add(new Run(command) { Foreground = Fire, FontWeight = FontWeights.SemiBold });
+            if (last.Lead is { } lead && command.Length == last.Command.Length) Line.Inlines.Add(new Run(" · " + lead) { Foreground = Muted });
+            wordsShown = 0;
         }
         else if (model.Words.Count == 0)
         {
             Line.Inlines.Add(new Run(model.Listening ? "Ouvindo…" : "Pausado") { Foreground = Muted });
+            typing = "";
+            wordsShown = 0;
         }
         else
         {
-            foreach (var word in model.Words)
+            typing = "";
+            if (model.Words.Count < wordsShown) wordsShown = 0;  // a new utterance
+            for (var i = 0; i < model.Words.Count; i++)
             {
+                var word = model.Words[i];
                 var run = new Run(word.Text + " ");
                 if (word.Used)
                 {
                     run.Foreground = Dim;
                     run.TextDecorations = TextDecorations.Strikethrough;
                 }
+                else if (i >= wordsShown)
+                {
+                    var ink = Ink(0xFF);  // a word just heard fades in
+                    ink.BeginAnimation(Brush.OpacityProperty, new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)));
+                    run.Foreground = ink;
+                }
                 Line.Inlines.Add(run);
             }
+            wordsShown = model.Words.Count;
             Dispatcher.InvokeAsync(TrimLineStart, System.Windows.Threading.DispatcherPriority.Loaded);
         }
     }
