@@ -11,7 +11,7 @@
   <br><a href="README.md">Português</a>
 </p>
 
-<p align="center"><a href="docs/demo.mp4"><img src="docs/demo.gif" width="800" alt="Demo: QuickVoice opens Notepad mid-sentence, types good morning and searches the dollar rate on Google"></a><br><sub><a href="docs/demo.mp4">Watch the full-resolution video (MP4)</a> · <a href="docs/demo-vertical.mp4">vertical version (Reels, TikTok, Shorts)</a></sub></p>
+<p align="center"><a href="docs/demo.mp4"><img src="docs/demo.gif" width="800" alt="Demo: QuickVoice opens Notepad mid-sentence, types good morning, searches the dollar rate on Google, snaps windows, answers math, hands tasks to Copilot, shreds history and glows with your voice"></a><br><sub><a href="docs/demo.mp4">Watch the full-resolution video (MP4)</a> · <a href="docs/demo-vertical.mp4">vertical version (Reels, TikTok, Shorts)</a></sub></p>
 
 Say "open notepad and type good morning": Notepad is already opening while you are still saying
 "type", and "good morning" is typed at the pause. Free, no account and no API key: by default every
