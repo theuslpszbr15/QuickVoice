@@ -28,7 +28,30 @@ internal partial class SettingsWindow : Window
         Select(SizeBox, settings.BarSize);
         Select(GlowBox, settings.VoiceGlow);
         UpdatesCheck.IsChecked = settings.CheckUpdates;
+        Select(DeciderBox, settings.Decider);
+        ShowLaya();
+        Activated += (_, _) => ShowLaya();  // back from the install terminal
         Loaded += (_, _) => Activate();
+    }
+
+    private void ShowLaya()
+    {
+        var installed = LayaServer.Installed;
+        LayaButton.Content = installed ? "Reinstalar a Laya…" : "Instalar a Laya…";
+        LayaStatus.Text = installed ? "✓ instalada" : "não instalada";
+    }
+
+    private void OnInstallLaya(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            LayaServer.Install();
+            LayaStatus.Text = "instalando no terminal…";
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception)
+        {
+            LayaStatus.Text = $"falhou: {error.Message}";
+        }
     }
 
     private void OnSave(object sender, RoutedEventArgs e)
@@ -45,6 +68,7 @@ internal partial class SettingsWindow : Window
         settings.BarSize = TagOf(SizeBox) ?? "normal";
         settings.VoiceGlow = TagOf(GlowBox) ?? "colorful";
         settings.CheckUpdates = UpdatesCheck.IsChecked == true;
+        settings.Decider = TagOf(DeciderBox) ?? "auto";
         DialogResult = true;
     }
 

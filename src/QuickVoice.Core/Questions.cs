@@ -28,29 +28,39 @@ public static class Questions
         (ActionKind.None.RawValue(), Detail("Not a command for the computer yet: filler, thanks, or talk about something",
             "can you", "okay so", "thanks")));
 
+    /// <param name="laya">
+    /// Laya is asked once the speaker settles and each question costs it a pass on the CPU: it gets only what the pause
+    /// reads (action, app, argument), with each option's key repeated as its description.
+    /// </param>
     public static SortedDictionary<string, object?> Body(string tail, string frontmost, IReadOnlyList<string> apps,
-                                                         IReadOnlyList<string> spans, string model)
+                                                         IReadOnlyList<string> spans, string model, bool laya = false)
     {
         var questions = Sorted(
             ("action", Question("choice",
                 "`transcript` is a live, possibly unfinished voice command to a Windows PC whose frontmost app is `frontmost_app`. What should the computer do?",
-                Actions)),
-            ("complete", Question("noul",
+                Actions)));
+        if (!laya)
+        {
+            questions["complete"] = Question("noul",
                 "`transcript` is being spoken live. Is the command already fully stated, so that more words would not change what to do or its argument?",
-                Sorted(("true", "Action and its argument are fully stated"), ("false", "The speaker is likely mid-command")))));
+                Sorted(("true", "Action and its argument are fully stated"), ("false", "The speaker is likely mid-command")));
+        }
         if (apps.Count > 0)
         {
             questions["app"] = Question("choice", "Which installed application does `transcript` name as the one to open or use?",
-                Options(apps, NoApp, "No application is named"));
-            questions["opens_app"] = Question("noul",
-                "Does `transcript` ask the computer to open or switch to an application, possibly along with other commands?",
-                Sorted(("true", "It asks to open or switch to an app"), ("false", "It does not ask to open an app")));
+                Options(apps, NoApp, "No application is named", laya));
+            if (!laya)
+            {
+                questions["opens_app"] = Question("noul",
+                    "Does `transcript` ask the computer to open or switch to an application, possibly along with other commands?",
+                    Sorted(("true", "It asks to open or switch to an app"), ("false", "It does not ask to open an app")));
+            }
         }
         if (spans.Count > 0)
         {
             questions["argument"] = Question("choice",
                 "Which span of `transcript` is exactly the command's argument: the search query, the website, or the text to type?",
-                Options(spans, NoMatch, "The command has no search query, website or text yet"));
+                Options(spans, NoMatch, "The command has no search query, website or text yet", laya));
         }
         return Sorted(
             ("model", model),
@@ -61,11 +71,14 @@ public static class Questions
     private static SortedDictionary<string, object?> Question(string type, string instructions, SortedDictionary<string, object?> criteria) =>
         Sorted(("type", type), ("instructions", instructions), ("criteria", criteria));
 
-    /// <summary>The option key is the whole meaning (an app name, a span of speech): its value is null.</summary>
-    private static SortedDictionary<string, object?> Options(IReadOnlyList<string> keys, string escapeKey, string escapeText)
+    /// <summary>
+    /// The option key is the whole meaning (an app name, a span of speech): its value is null for Jev.
+    /// Laya reads only the descriptions, so for it the key is repeated as the description.
+    /// </summary>
+    private static SortedDictionary<string, object?> Options(IReadOnlyList<string> keys, string escapeKey, string escapeText, bool describe)
     {
         var criteria = new SortedDictionary<string, object?>(StringComparer.Ordinal);
-        foreach (var key in keys.Take(MaxOptions)) criteria.TryAdd(key, null);
+        foreach (var key in keys.Take(MaxOptions)) criteria.TryAdd(key, describe ? key : null);
         criteria[escapeKey] = escapeText;
         return criteria;
     }

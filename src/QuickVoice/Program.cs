@@ -48,11 +48,16 @@ internal static class Program
         var log = options.Log ? new EventLog() : null;
         if (log is not null) Terminal.Out($"📝 gravando em {log.Path}\n");
         log?.Write("start", new() { ["mode"] = options.Text is null ? "app" : "text", ["dry_run"] = options.DryRun, ["apps"] = apps.Names.Count });
-        var session = new Session(key is null ? new LocalDecider() : new JevClient(key), apps, new Executor(apps, shortcuts, options.DryRun), shortcuts, log);
+        var laya = settings.Decider == "laya";
+        IDecider decider = laya ? new HybridDecider(new LocalDecider(), JevClient.Laya(LayaServer.Endpoint))
+            : key is null || settings.Decider == "local" ? new LocalDecider()
+            : new JevClient(key);
+        var session = new Session(decider, apps, new Executor(apps, shortcuts, options.DryRun), shortcuts, log);
 
         if (options.Text is { } text)
         {
-            Terminal.Out($"{apps.Names.Count} apps instalados, navegadores: {string.Join(", ", apps.Browsers)}, decisões: {(key is null ? "regras locais" : "Jev")}\n");
+            var who = laya ? "Laya + regras locais" : decider is LocalDecider ? "regras locais" : "Jev";
+            Terminal.Out($"{apps.Names.Count} apps instalados, navegadores: {string.Join(", ", apps.Browsers)}, decisões: {who}\n");
             var dispatcher = Dispatcher.CurrentDispatcher;
             dispatcher.InvokeAsync(async () =>
             {

@@ -35,6 +35,9 @@ public sealed class Engine
     private (Command Command, int Count)? streak;
     private Command? lastFired;
 
+    /// <summary>The answer to the newest partial of this utterance has not arrived yet (a slow model).</summary>
+    public bool Waiting => lastTail.Length > 0 && (latest?.Request.Seq ?? 0) != seq;
+
     /// <summary>A new partial from speech recognition: the whole utterance so far.</summary>
     public Request? Hear(string transcript)
     {

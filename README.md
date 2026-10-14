@@ -65,6 +65,13 @@ offline e instantâneas. Com uma chave paga do Jev ([console.typesafe.ai](https:
 ele passa a decidir e entende frases mais soltas: ícone na bandeja → "Usar chave do Jev". Controles do
 sistema, cliques e atalhos continuam nas regras locais.
 
+**IA local e grátis: Laya.** A [Laya](https://github.com/NandhaKishorM/laya) (Apache 2.0) é um modelo aberto
+que fala a mesma API do Jev e roda no seu PC. Em Configurações → "Quem decide o que fazer" → **Laya**, e
+"Instalar a Laya…" (precisa do Python 3.10+; baixa ~1,5 GB uma vez e usa ~1,7 GB de RAM). O QuickVoice
+liga o servidor dela escondido (`127.0.0.1:8765`) e o desliga ao sair. As regras locais continuam
+respondendo na hora o que entendem; a Laya só lê as frases que elas não entendem ("me mostra como fazer
+bolo de cenoura"), uma vez quando você para de falar (1–3 s no processador).
+
 1. Uma pílula flutua no topo da tela. Aperte **Alt+Espaço** (ou **Ctrl+Alt+Espaço**, se outro
    app já usa Alt+Espaço, como o PowerToys Run) ou o botão ▶ e fale.
 2. Na primeira vez, o Windows pede duas permissões. O próprio app abre a página certa:
@@ -151,7 +158,8 @@ que gera `src/QuickVoice/app.ico`.
 ## Como ele decide
 
 A lógica em `src/QuickVoice.Core` é um port 1:1 do `PartwayCore`, com os mesmos testes.
-Quem responde "o que fazer" é um `IDecider`: as regras locais (`LocalDecider`, padrão) ou o Jev.
+Quem responde "o que fazer" é um `IDecider`: as regras locais (`LocalDecider`, padrão), o Jev, ou a
+Laya (`HybridDecider`: regras primeiro, a Laya só no que elas não entendem).
 
 - Cada transcrição parcial vira uma pergunta: qual ação, qual app, quais
   palavras são o argumento, e um sim/não "pede para abrir um app?".
@@ -198,7 +206,7 @@ ouvido (eventos: start, heard, ask, answer, fire, run, pause, end, error).
 ## Privacidade
 
 Com o reconhecimento do Windows, a fala vira texto pelo serviço online da Microsoft; com o
-**Whisper**, tudo fica no PC. Com as regras locais, nada mais sai do PC; só com uma chave do Jev as
+**Whisper**, tudo fica no PC. Com as regras locais ou a Laya, nada mais sai do PC; só com uma chave do Jev as
 palavras vão para a TypeSafe. Com a palavra de ativação ligada o microfone fica sempre aberto (o que
 não começa com o nome é descartado). `--log` fica desligado por padrão e, quando ligado, guarda tudo o
 que o microfone ouvir.

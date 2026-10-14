@@ -65,6 +65,13 @@ through the same engine as speech, and focus returns to the app you were in, so 
 With a paid Jev key ([console.typesafe.ai](https://console.typesafe.ai/keys)) Jev decides and understands
 looser phrasing: tray icon → "Usar chave do Jev". System controls, clicks and shortcuts stay on the local rules.
 
+**Free local AI: Laya.** [Laya](https://github.com/NandhaKishorM/laya) (Apache 2.0) is an open model that
+speaks Jev's API and runs on your PC. Settings → "Quem decide o que fazer" → **Laya**, then "Instalar a
+Laya…" (needs Python 3.10+; downloads ~1.5 GB once and uses ~1.7 GB of RAM). QuickVoice starts its server
+hidden (`127.0.0.1:8765`) and stops it on exit. The local rules still answer at once what they know; Laya
+only reads the sentences they don't ("me mostra como fazer bolo de cenoura"), once you stop talking
+(1–3 s on the CPU).
+
 1. A pill floats at the top of the screen. Press **Alt+Space** (or **Ctrl+Alt+Space** if another app
    such as PowerToys Run owns Alt+Space) or the ▶ button, and speak.
 2. The first time, Windows asks for two permissions; the app opens the right page:
@@ -146,7 +153,8 @@ push runs build and tests in [CI](.github/workflows/ci.yml).
 ## How it decides
 
 The logic in `src/QuickVoice.Core` is a 1:1 port of `PartwayCore`, with the same tests. What to do comes
-from an `IDecider`: the local rules (`LocalDecider`, default) or Jev.
+from an `IDecider`: the local rules (`LocalDecider`, default), Jev, or Laya (`HybridDecider`: rules first,
+Laya only for what they don't understand).
 
 - Every partial transcript becomes a question: which action, which app, which words are the argument,
   and a yes/no "does it ask to open an app?".
@@ -175,7 +183,7 @@ heard (events: start, heard, ask, answer, fire, run, pause, end, error).
 ## Privacy
 
 With Windows recognition, speech becomes text through Microsoft's online service; with **Whisper**, it stays
-on the PC. With the local rules nothing else leaves the PC; only with a Jev key are the words sent to
+on the PC. With the local rules or Laya nothing else leaves the PC; only with a Jev key are the words sent to
 TypeSafe. With the wake word on, the microphone is always open (anything that does not start with the name is
 discarded). `--log` is off by default and, when on, keeps everything the microphone hears.
 

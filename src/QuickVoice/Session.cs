@@ -282,6 +282,8 @@ internal sealed class Session
             if (dictating) Dictate();
             else Handle(engine.Pause());
             await Task.Delay(UtteranceEndsAfter - pauseAfter, token);
+            // Laya on the CPU takes 1–3 s: the newest partial's answer may still fire on the pause.
+            for (var waited = 0; engine.Waiting && waited < 8000; waited += 100) await Task.Delay(100, token);
         }
         catch (TaskCanceledException)
         {

@@ -26,6 +26,8 @@ internal sealed class Settings
     public string VoiceGlow { get; set; } = "colorful";
     /// <summary>Asks GitHub for a newer release when the app starts.</summary>
     public bool CheckUpdates { get; set; } = true;
+    /// <summary>Who reads the commands: "auto" (Jev with a key, else the local rules), "local", "laya" or "jev".</summary>
+    public string Decider { get; set; } = "auto";
 
     /// <summary>Where "copilot, …" tasks run: "copilot-cli" (a terminal, any model) or "vscode" (the Copilot chat in agent mode).</summary>
     public string AgentHarness { get; set; } = "copilot-cli";

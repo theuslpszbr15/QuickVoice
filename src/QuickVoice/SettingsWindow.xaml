@@ -58,6 +58,20 @@
         <TextBlock Style="{StaticResource Hint}" Margin="22,6,0,0"
                    Text="Separe variações por vírgula. Ex.: “QuickVoice, abre o chrome”. Com o reconhecimento do Windows, o áudio vai continuamente para a Microsoft; com o Whisper, fica no PC."/>
 
+        <TextBlock Text="Quem decide o que fazer" Style="{StaticResource Heading}"/>
+        <ComboBox x:Name="DeciderBox" Height="28">
+            <ComboBoxItem Tag="auto" Content="Automático: Jev se houver chave, senão regras locais"/>
+            <ComboBoxItem Tag="local" Content="Regras locais: instantâneo, frases conhecidas"/>
+            <ComboBoxItem Tag="laya" Content="Laya: IA local e gratuita para o que as regras não entendem"/>
+            <ComboBoxItem Tag="jev" Content="Jev: IA na nuvem (paga, precisa de chave)"/>
+        </ComboBox>
+        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <Button x:Name="LayaButton" Content="Instalar a Laya…" Click="OnInstallLaya"/>
+            <TextBlock x:Name="LayaStatus" VerticalAlignment="Center" Foreground="#5F6368"/>
+        </StackPanel>
+        <TextBlock Style="{StaticResource Hint}"
+                   Text="A Laya (github.com/NandhaKishorM/laya) roda no seu PC, sem internet depois de baixada: precisa do Python 3.10+, ~1,5 GB e ~1,5 GB de RAM. Leva 1–3 s por decisão no processador, por isso só é chamada quando as regras locais não entendem."/>
+
         <TextBlock Text="Aparência da barra" Style="{StaticResource Heading}"/>
         <Grid>
             <Grid.ColumnDefinitions>

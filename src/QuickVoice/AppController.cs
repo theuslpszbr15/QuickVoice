@@ -49,6 +49,11 @@ internal sealed class AppController(Session session, BarModel model, Options opt
             Toggle();  // always listening, waiting for its name
         }
         if (settings.CheckUpdates) _ = CheckForUpdateAsync(quiet: true);
+        if (settings.Decider == "laya")
+        {
+            if (LayaServer.Installed) LayaServer.Start();
+            else model.Notice = "A Laya não está instalada: Configurações → Instalar a Laya… (por ora, regras locais).";
+        }
         if (options.Agent) bar.Dispatcher.InvokeAsync(OpenAgent, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         if (options.History) bar.Dispatcher.InvokeAsync(ShowHistory, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
@@ -211,6 +216,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
             tray.Dispose();
         }
         log?.Dispose();
+        LayaServer.Stop();
         System.Windows.Application.Current.Shutdown();
     }
 
