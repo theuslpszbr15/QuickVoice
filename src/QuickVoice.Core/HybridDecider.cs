@@ -8,6 +8,8 @@ namespace QuickVoice.Core;
 public sealed class HybridDecider(LocalDecider local, IDecider model, TimeSpan? settle = null) : IDecider
 {
     private static readonly TimeSpan RetryAfter = TimeSpan.FromSeconds(10);
+    /// <summary>Fewer words are a leftover ("abre o bloco de | notas") or too little to read, not a new command.</summary>
+    public const int MinWords = 3;
 
     private readonly TimeSpan settle = settle ?? TimeSpan.FromMilliseconds(450);
     private readonly SemaphoreSlim gate = new(1, 1);
@@ -19,7 +21,8 @@ public sealed class HybridDecider(LocalDecider local, IDecider model, TimeSpan? 
     {
         var ticket = Interlocked.Increment(ref newest);
         var mine = local.Decide(tail, apps);
-        if (mine.Action != ActionKind.None || Environment.TickCount64 < Interlocked.Read(ref retryAt)) return (mine, 0);
+        if (mine.Action != ActionKind.None || Vocabulary.Words(tail).Length < MinWords
+            || Environment.TickCount64 < Interlocked.Read(ref retryAt)) return (mine, 0);
         if (settle > TimeSpan.Zero) await Task.Delay(settle, cancel).ConfigureAwait(false);
         if (ticket != Volatile.Read(ref newest)) return (mine, 0);  // still talking
         await gate.WaitAsync(cancel).ConfigureAwait(false);

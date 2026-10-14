@@ -110,4 +110,14 @@ public class LayaTests
         Assert.Equal("Notes", (await late).Decision.App);
         Assert.Equal(1, stub.Calls);
     }
+
+    [Fact]
+    public async Task HybridLeavesShortLeftoversToTheRules()
+    {
+        var stub = new Stub(() => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(DecisionTests.Fixture) });
+        var hybrid = new HybridDecider(new LocalDecider(), JevClient.Laya(Local, stub), TimeSpan.Zero);
+        var (leftover, _) = await hybrid.DecideAsync("notas", "Bloco de notas", ["Notes"], ["notas"]);
+        Assert.Equal(ActionKind.None, leftover.Action);
+        Assert.Equal(0, stub.Calls);
+    }
 }
