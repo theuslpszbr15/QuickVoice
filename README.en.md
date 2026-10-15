@@ -1,11 +1,7 @@
-<p align="center"><img src="docs/icon.png" width="128" alt="QuickVoice: a speech bubble, half said and half dashed"></p>
-
-<h1 align="center">QuickVoice</h1>
-
-<p align="center"><b>Control Windows with your voice. It acts before you finish the sentence.</b></p>
+<p align="center"><img src="docs/cover.png" width="900" alt="QuickVoice: control Windows with your voice. It acts before you finish the sentence."></p>
 
 <p align="center">
-  <a href="https://github.com/theuslpszbr15/QuickVoice/releases/latest"><img src="https://img.shields.io/github/v/release/theuslpszbr15/QuickVoice?label=download&amp;color=ffd60a" alt="Latest release"></a>
+  <a href="https://github.com/theuslpszbr15/QuickVoice/releases/latest"><img src="https://img.shields.io/github/v/release/theuslpszbr15/QuickVoice?label=download&amp;color=8b6cff" alt="Latest release"></a>
   <a href="https://github.com/theuslpszbr15/QuickVoice/actions/workflows/ci.yml"><img src="https://github.com/theuslpszbr15/QuickVoice/actions/workflows/ci.yml/badge.svg" alt="Build and tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
   <br><a href="README.md">Português</a>
@@ -20,6 +16,17 @@ decision is made on your PC.
 Inspired by [partway](https://github.com/tostechbr/partway) (macOS, Swift), ported to Windows
 (.NET 10 + WPF). It can optionally use [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev),
 TypeSafe's System One, to understand looser phrasing.
+
+## Who decides what to do
+
+| Option | Price | Runs | Good for |
+|---|---|---|---|
+| **Local rules** (default) | free | on the PC, instant | the phrases in the table below |
+| **[Laya](https://github.com/NandhaKishorM/laya)** (open AI) | free, no account or key | on the PC, offline once downloaded | loose phrasing the rules don't understand |
+| **Jev** (TypeSafe) | paid, needs a key | in the cloud | everything, more accurately |
+
+Pick one in Settings → "Quem decide o que fazer". Laya installs from the "Instalar a Laya…" button
+(details in [Install and use](#install-and-use)).
 
 ## What you can say
 

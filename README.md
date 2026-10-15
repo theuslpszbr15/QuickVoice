@@ -1,11 +1,7 @@
-<p align="center"><img src="docs/icon.png" width="128" alt="QuickVoice: um balão de fala meio dito, meio tracejado"></p>
-
-<h1 align="center">QuickVoice</h1>
-
-<p align="center"><b>Controle o Windows pela voz. Ele age antes de você terminar a frase.</b></p>
+<p align="center"><img src="docs/cover.png" width="900" alt="QuickVoice: controle o Windows pela voz. Ele age antes de você terminar a frase."></p>
 
 <p align="center">
-  <a href="https://github.com/theuslpszbr15/QuickVoice/releases/latest"><img src="https://img.shields.io/github/v/release/theuslpszbr15/QuickVoice?label=baixar&amp;color=ffd60a" alt="Última versão"></a>
+  <a href="https://github.com/theuslpszbr15/QuickVoice/releases/latest"><img src="https://img.shields.io/github/v/release/theuslpszbr15/QuickVoice?label=baixar&amp;color=8b6cff" alt="Última versão"></a>
   <a href="https://github.com/theuslpszbr15/QuickVoice/actions/workflows/ci.yml"><img src="https://github.com/theuslpszbr15/QuickVoice/actions/workflows/ci.yml/badge.svg" alt="Build e testes"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue" alt="Licença MIT"></a>
   <br><a href="README.en.md">English</a>
@@ -20,6 +16,17 @@ chave de API: por padrão, as decisões são tomadas no seu PC.
 Inspirado no [partway](https://github.com/tostechbr/partway) (macOS, Swift), portado para
 Windows (.NET 10 + WPF). Opcionalmente usa o [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev),
 o System One da TypeSafe, para entender frases mais soltas.
+
+## Quem decide o que fazer
+
+| Opção | Preço | Onde roda | Bom para |
+|---|---|---|---|
+| **Regras locais** (padrão) | grátis | no PC, instantâneo | as frases da tabela abaixo |
+| **[Laya](https://github.com/NandhaKishorM/laya)** (IA aberta) | grátis, sem conta nem chave | no PC, offline depois de baixar | frases soltas que as regras não entendem |
+| **Jev** (TypeSafe) | pago, precisa de chave | na nuvem | tudo, com mais precisão |
+
+Escolha em Configurações → "Quem decide o que fazer". A Laya se instala pelo botão "Instalar a Laya…"
+(detalhes em [Instalar e usar](#instalar-e-usar)).
 
 ## O que dá pra dizer
 
