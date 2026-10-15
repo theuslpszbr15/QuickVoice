@@ -151,7 +151,7 @@ public class MoreCommandsTests
 
     [Theory]
     [InlineData("copilot, resume o relatório de ontem", "resume o relatório de ontem")]
-    [InlineData("ei copilot abre o site da GM e me diz as notícias", "abre o site da GM e me diz as notícias")]
+    [InlineData("ei copilot abre o site da globo e me diz as notícias", "abre o site da globo e me diz as notícias")]
     [InlineData("desenvolva uma ToDoList completa", "desenvolva uma ToDoList completa")]
     [InlineData("cria um app de tarefas com login", "cria um app de tarefas com login")]
     [InlineData("build a todo app", "build a todo app")]
