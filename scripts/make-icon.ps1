@@ -1,5 +1,5 @@
-# Draws the speech-bubble icon (half said, half dashed) into src/QuickVoice/app.ico and docs/icon.png.
-# Geometry follows partway's docs/icon.svg (1024 units). Run: pwsh scripts/make-icon.ps1
+# Draws the QuickVoice icon into src/QuickVoice/app.ico and docs/icon.png: a "Q" made of a voice ring with
+# three level bars inside and a lightning-bolt tail (quick + voice), on a dark tile. Run: pwsh scripts/make-icon.ps1
 Add-Type -AssemblyName System.Drawing
 
 $out = Join-Path $PSScriptRoot '..\src\QuickVoice\app.ico'
@@ -16,31 +16,53 @@ function RoundRect([float]$x, [float]$y, [float]$w, [float]$h, [float]$r) {
     $p
 }
 
+function Pt([float]$x, [float]$y) { New-Object System.Drawing.PointF $x, $y }
+function Rgb([int]$r, [int]$g, [int]$b) { [System.Drawing.Color]::FromArgb($r, $g, $b) }
+
+function Spectrum([float]$x0, [float]$y0, [float]$x1, [float]$y1) {
+    $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush (Pt $x0 $y0), (Pt $x1 $y1), (Rgb 92 225 255), (Rgb 255 111 181)
+    $blend = New-Object System.Drawing.Drawing2D.ColorBlend 3
+    $blend.Colors = [System.Drawing.Color[]]@((Rgb 92 225 255), (Rgb 139 108 255), (Rgb 255 111 181))
+    $blend.Positions = [float[]]@(0, 0.5, 1)
+    $brush.InterpolationColors = $blend
+    $brush
+}
+
 function Draw([int]$size) {
     $bmp = New-Object System.Drawing.Bitmap $size, $size, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
     $g = [System.Drawing.Graphics]::FromImage($bmp)
     $g.SmoothingMode = 'AntiAlias'
     $g.PixelOffsetMode = 'HighQuality'
-    # The yellow tile fills more of the canvas than on macOS: Windows icons have no built-in margin.
-    $k = ($size * 0.94) / 824
-    $g.TranslateTransform($size * 0.03 - 100 * $k, $size * 0.03 - 100 * $k)
+    $k = $size / 1024
     $g.ScaleTransform($k, $k)
-    $ink = [System.Drawing.Color]::FromArgb(29, 29, 31)
+    $small = $size -le 24  # fewer, bolder strokes so it still reads in the tray
 
-    $g.FillPath((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 214, 10))), (RoundRect 100 100 824 824 184))
+    $tileColor = Rgb 19 17 34
+    $tile = New-Object System.Drawing.Drawing2D.LinearGradientBrush (Pt 0 0), (Pt 1024 1024), (Rgb 38 32 66), (Rgb 11 10 22)
+    $g.FillPath($tile, (RoundRect 24 24 976 976 230))
 
-    $g.SetClip((New-Object System.Drawing.RectangleF 0, 0, 512, 1024))
-    $said = New-Object System.Drawing.SolidBrush $ink
-    $g.FillPath($said, (RoundRect 232 312 560 360 180))
-    $g.FillPolygon($said, [System.Drawing.PointF[]]@((New-Object System.Drawing.PointF 336, 622), (New-Object System.Drawing.PointF 286, 756), (New-Object System.Drawing.PointF 438, 658)))
+    $ring = if ($small) { 118 } else { 92 }
+    $pen = New-Object System.Drawing.Pen (Spectrum 200 200 820 820), $ring
+    $g.DrawEllipse($pen, 222, 222, 560, 560)
 
-    # Small sizes get a thicker, sparser dash so the unsaid half still reads at 16 px.
-    $stroke = [Math]::Max(28, 1.6 / $k)
-    $g.SetClip((New-Object System.Drawing.RectangleF 532, 0, 492, 1024))
-    $pen = New-Object System.Drawing.Pen $ink, $stroke
-    $pen.DashCap = 'Round'
-    $pen.DashPattern = [float[]]@((54 / 28), (40 / 28) * [Math]::Max(1, $stroke / 28))
-    $g.DrawPath($pen, (RoundRect 246 326 532 332 166))
+    # The tail: a bolt cut out of the ring by a tile-colored outline.
+    $bolt = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $bolt.AddPolygon([System.Drawing.PointF[]]@((Pt 40 0), (Pt 100 0), (Pt 72 55), (Pt 112 55), (Pt 30 150), (Pt 50 82), (Pt 8 82)))
+    $m = New-Object System.Drawing.Drawing2D.Matrix
+    $m.Translate(765, 765); $m.Rotate(-36); $m.Scale(2.0, 2.0); $m.Translate(-60, -75)
+    $bolt.Transform($m)
+    $cut = New-Object System.Drawing.Pen $tileColor, ($(if ($small) { 70 } else { 46 }))
+    $cut.LineJoin = 'Round'
+    $g.DrawPath($cut, $bolt)
+    $g.FillPath((Spectrum 640 640 900 900), $bolt)
+
+    $white = New-Object System.Drawing.SolidBrush (Rgb 245 245 250)
+    $bars = if ($small) { @(@(400, 190), @(560, 300)) } else { @(@(398, 160), @(502, 300), @(606, 210)) }
+    $w = if ($small) { 110 } else { 70 }
+    foreach ($b in $bars) {
+        $x = $b[0] - $w / 2; $h = $b[1]
+        $g.FillPath($white, (RoundRect $x (502 - $h / 2) $w $h ($w / 2)))
+    }
     $g.Dispose()
     $bmp
 }

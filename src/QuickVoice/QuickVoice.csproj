@@ -13,7 +13,7 @@
     <RootNamespace>QuickVoice</RootNamespace>
     <StartupObject>QuickVoice.Program</StartupObject>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>1.5.1</Version>
+    <Version>1.5.2</Version>
   </PropertyGroup>
 
   <ItemGroup>

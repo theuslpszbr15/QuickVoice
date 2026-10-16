@@ -277,7 +277,7 @@ internal sealed class AppController(Session session, BarModel model, Options opt
         return icon;
     }
 
-    /// <summary>The speech bubble, half said and half dashed; a green dot while listening.</summary>
+    /// <summary>The app icon; a green dot while listening.</summary>
     private static Drawing.Icon TrayIcon(bool listening)
     {
         var size = Forms.SystemInformation.SmallIconSize;

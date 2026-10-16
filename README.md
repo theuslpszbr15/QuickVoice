@@ -159,7 +159,7 @@ Uma versão nova sai sozinha ao criar uma tag `v*` (`git tag v1.2.0; git push --
 [`installer/QuickVoice.iss`](installer/QuickVoice.iss)) e o `.zip`, e publica em Releases. Todo push roda
 build e testes no [CI](.github/workflows/ci.yml).
 
-O ícone (balão de fala meio dito, meio tracejado, como o do original) sai de `scripts/make-icon.ps1`,
+O ícone (um "Q" de onda de voz com barras de nível e um raio na cauda) sai de `scripts/make-icon.ps1`,
 que gera `src/QuickVoice/app.ico`.
 
 ## Como ele decide
